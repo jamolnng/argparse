@@ -55,27 +55,17 @@ class ArgumentParser {
       std::vector<std::string> split_args = split(argstr, "^-|\\s-");
       std::vector<std::string> arg_parts;
       std::string name;
-      std::string val;
       for (auto &split_arg : split_args) {
         std::vector<std::string> arg_parts = split(split_arg, "\\s+");
         name = trim_copy(arg_parts[0]);
         if (name.empty()) continue;
-        if (name == "h" || name == "-help") {
-          _help = true;
-          print_help(argv[0]);
-          continue;
+        if (name[0] == '-') {
+          _add_variable(name, arg_parts, argv);
+        } else {
+          for (auto c : name) {
+            _add_variable(std::string(1, c), arg_parts, argv);
+          }
         }
-        ltrim(name, [](int c) { return c != (int)'-'; });
-        name = delimit(name);
-        if (arg_parts.size() > 1)
-          val =
-              std::accumulate(arg_parts.begin() + 1, arg_parts.end(),
-                              std::string(), [](std::string a, std::string b) {
-                                return trim_copy(a) + " " + trim_copy(b);
-                              });
-        else
-          val = "";
-        _variables[name] = val;
       }
     }
     if (!_help) {
@@ -124,7 +114,24 @@ class ArgumentParser {
     bool _required;
     friend class ArgumentParser;
   };
-
+  inline bool _add_variable(std::string name,
+                            std::vector<std::string> &arg_parts, char *argv[]) {
+    if (name == "h" || name == "-help") {
+      _help = true;
+      print_help(argv[0]);
+    }
+    ltrim(name, [](int c) { return c != (int)'-'; });
+    name = delimit(name);
+    std::string val;
+    if (arg_parts.size() > 1)
+      val = std::accumulate(arg_parts.begin() + 1, arg_parts.end(),
+                            std::string(), [](std::string a, std::string b) {
+                              return trim_copy(a) + " " + trim_copy(b);
+                            });
+    else
+      val = "";
+    _variables[name] = val;
+  }
   static std::string delimit(const std::string &name) {
     return std::string(std::min(name.size(), (size_t)2), '-').append(name);
   }
