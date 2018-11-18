@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iomanip>
 #include <iostream>
 #include <locale>
 #include <numeric>
@@ -14,13 +15,27 @@
 
 class ArgumentParser {
  public:
-  ArgumentParser(const std::string &desc) : _desc(desc) {}
-  ArgumentParser(const std::string desc, int argc, char *argv[]) : _desc(desc) {
+  ArgumentParser(const std::string &desc) : _desc(desc), _help(false) {}
+  ArgumentParser(const std::string desc, int argc, char *argv[])
+      : ArgumentParser(desc) {
     parse(argc, argv);
   }
 
-  void add_argument(const std::string &name, bool optional = true) {
-    _arguments.push_back({name, optional});
+  void add_argument(const std::string &name, const std::string &desc,
+                    bool optional = true) {
+    _arguments.push_back({name, desc, optional});
+  }
+
+  bool is_help() { return _help; }
+
+  void print_help(char *f) {
+    std::cout << "Usage: " << f << " [options]" << std::endl;
+    std::cout << "Options:" << std::endl;
+    for (auto &a : _arguments) {
+      std::cout << "    " << std::setw(23) << std::left << a._name
+                << std::setw(23) << a._desc + (a._optional ? "" : " (Required)")
+                << std::endl;
+    }
   }
 
   void parse(int argc, char *argv[]) {
@@ -39,6 +54,11 @@ class ArgumentParser {
         std::vector<std::string> arg_parts = split(split_arg, "\\s+");
         name = trim_copy(arg_parts[0]);
         if (name.empty()) continue;
+        if (name == "h" || name == "-help") {
+          _help = true;
+          print_help(argv[0]);
+          continue;
+        }
         ltrim(name, [](int c) { return c != (int)'-'; });
         name = delimit(name);
         if (arg_parts.size() > 1)
@@ -79,12 +99,15 @@ class ArgumentParser {
  private:
   struct Argument {
    public:
-    Argument(const std::string &name, bool optional = true)
-        : _name(name), _optional(optional) {}
+    Argument(const std::string &name, const std::string &desc,
+             bool optional = true)
+        : _name(name), _desc(desc), _optional(optional) {}
 
    private:
     std::string _name;
+    std::string _desc;
     bool _optional;
+    friend class ArgumentParser;
   };
 
   static std::string delimit(const std::string &name) {
@@ -141,6 +164,7 @@ class ArgumentParser {
     return s;
   }
 
+  bool _help;
   std::string _desc;
   std::vector<Argument> _arguments;
   std::unordered_map<std::string, std::string> _variables;
