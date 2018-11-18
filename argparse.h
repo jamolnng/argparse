@@ -9,12 +9,18 @@
 #include <numeric>
 #include <regex>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 class ArgumentParser {
  public:
+  class ArgumentException : public std::runtime_error {
+   public:
+    ArgumentException(const char *msg) noexcept : std::runtime_error(msg) {}
+  };
+
   ArgumentParser(const std::string &desc) : _desc(desc), _help(false) {}
   ArgumentParser(const std::string desc, int argc, char *argv[])
       : ArgumentParser(desc) {
@@ -22,8 +28,8 @@ class ArgumentParser {
   }
 
   void add_argument(const std::string &name, const std::string &desc,
-                    bool optional = true) {
-    _arguments.push_back({name, desc, optional});
+                    bool required = false) {
+    _arguments.push_back({name, desc, required});
   }
 
   bool is_help() { return _help; }
@@ -33,7 +39,7 @@ class ArgumentParser {
     std::cout << "Options:" << std::endl;
     for (auto &a : _arguments) {
       std::cout << "    " << std::setw(23) << std::left << a._name
-                << std::setw(23) << a._desc + (a._optional ? "" : " (Required)")
+                << std::setw(23) << a._desc + (a._required ? " (Required)" : "")
                 << std::endl;
     }
   }
@@ -72,6 +78,15 @@ class ArgumentParser {
         _variables[name] = val;
       }
     }
+    if (!_help) {
+      for (auto &a : _arguments) {
+        if (a._required) {
+          if (_variables.find(a._name) == _variables.end())
+            throw ArgumentException(
+                ("Required argument not found: " + a._name).c_str());
+        }
+      }
+    }
   }
 
   bool exists(const std::string &name) {
@@ -100,13 +115,13 @@ class ArgumentParser {
   struct Argument {
    public:
     Argument(const std::string &name, const std::string &desc,
-             bool optional = true)
-        : _name(name), _desc(desc), _optional(optional) {}
+             bool required = false)
+        : _name(name), _desc(desc), _required(required) {}
 
    private:
     std::string _name;
     std::string _desc;
-    bool _optional;
+    bool _required;
     friend class ArgumentParser;
   };
 
