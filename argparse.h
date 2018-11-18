@@ -59,6 +59,16 @@ class ArgumentParser {
   }
 
   template <typename T>
+  std::vector<T> getv(const std::string &name) {
+    std::string argstr = get<std::string>(name);
+    std::vector<T> v;
+    std::istringstream in(argstr);
+    T t;
+    while (in >> t >> std::ws) v.push_back(t);
+    return v;
+  }
+
+  template <typename T>
   T get(const std::string &name) {
     std::istringstream in(get<std::string>(name));
     T t;
@@ -143,7 +153,13 @@ inline std::string ArgumentParser::get<std::string>(const std::string &name) {
 }
 template <>
 inline bool ArgumentParser::get<bool>(const std::string &name) {
-  return _variables.find(delimit(name)) != _variables.end();
+  return exists(name);
+}
+template <>
+inline std::vector<std::string> ArgumentParser::getv<std::string>(
+    const std::string &name) {
+  std::string argstr = get<std::string>(name);
+  return split(argstr, "\\s");
 }
 
 #endif
