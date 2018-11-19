@@ -34,4 +34,4 @@ int main(int argc, char* argv[]) {
 ```
 
 ## Compiling
-Just add `argparse.h` to your include path. Requires G++ 5
+Just add `argparse.h` to your include path. Requires compiler support for `<regex>` (ex: g++>=4.9)
