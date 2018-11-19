@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
   parser.add_argument("-v", "a vector", true);
   try {
     parser.parse(argc, argv);
-  } catch (const ArgumentParser::ArgumentException& ex) {
+  } catch (const ArgumentParser::ArgumentNotFound& ex) {
     std::cout << ex.what() << std::endl;
     return 0;
   }

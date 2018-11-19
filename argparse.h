@@ -31,10 +31,15 @@
 #include <vector>
 
 class ArgumentParser {
+ private:
+  struct Argument;
+
  public:
-  class ArgumentException : public std::runtime_error {
+  class ArgumentNotFound : public std::runtime_error {
    public:
-    ArgumentException(const char *msg) noexcept : std::runtime_error(msg) {}
+    ArgumentNotFound(ArgumentParser::Argument &arg) noexcept
+        : std::runtime_error(
+              ("Required argument not found: " + arg._name).c_str()) {}
   };
 
   ArgumentParser(const std::string &desc) : _desc(desc), _help(false) {}
@@ -88,8 +93,7 @@ class ArgumentParser {
       for (auto &a : _arguments) {
         if (a._required) {
           if (_variables.find(a._name) == _variables.end()) {
-            throw ArgumentException(
-                ("Required argument not found: " + a._name).c_str());
+            throw ArgumentNotFound(a);
           }
         }
       }
@@ -119,6 +123,7 @@ class ArgumentParser {
   }
 
  private:
+  friend class ArgumentNotFound;
   struct Argument {
    public:
     Argument(const std::string &name, const std::string &desc,
