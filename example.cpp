@@ -36,7 +36,8 @@ int main(int argc, char* argv[]) {
   std::cout << parser.get<int>("a") << std::endl;
   std::cout << (parser.get<bool>("flag") ? "true" : "false") << std::endl;
   std::cout << (parser.get<bool>("d") ? "true" : "false") << std::endl;
-  for (auto i : parser.getv<double>("v")) std::cout << i << " : ";
-  std::cout << std::endl;
+  auto v = parser.getv<double>("v");
+  std::copy(v.begin(), v.end(), std::ostream_iterator<double>(std::cout, " "));
+  if (v.size()) std::cout << std::endl;
   return 0;
 }

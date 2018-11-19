@@ -109,8 +109,8 @@ class ArgumentParser {
     std::string argstr = get<std::string>(name);
     std::vector<T> v;
     std::istringstream in(argstr);
-    T t;
-    while (in >> t >> std::ws) v.push_back(t);
+    std::copy(std::istream_iterator<T>(in), std::istream_iterator<T>(),
+              std::back_inserter(v));
     return v;
   }
 
