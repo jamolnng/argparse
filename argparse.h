@@ -87,9 +87,10 @@ class ArgumentParser {
     if (!_help) {
       for (auto &a : _arguments) {
         if (a._required) {
-          if (_variables.find(a._name) == _variables.end())
+          if (_variables.find(a._name) == _variables.end()) {
             throw ArgumentException(
                 ("Required argument not found: " + a._name).c_str());
+          }
         }
       }
     }
@@ -124,11 +125,9 @@ class ArgumentParser {
              bool required = false)
         : _name(name), _desc(desc), _required(required) {}
 
-   private:
     std::string _name;
     std::string _desc;
     bool _required;
-    friend class ArgumentParser;
   };
   inline bool _add_variable(std::string name,
                             std::vector<std::string> &arg_parts, char *argv[]) {
@@ -139,13 +138,14 @@ class ArgumentParser {
     _ltrim(name, [](int c) { return c != (int)'-'; });
     name = _delimit(name);
     std::string val;
-    if (arg_parts.size() > 1)
+    if (arg_parts.size() > 1) {
       val = std::accumulate(arg_parts.begin() + 1, arg_parts.end(),
                             std::string(), [](std::string a, std::string b) {
                               return _trim_copy(a) + " " + _trim_copy(b);
                             });
-    else
+    } else {
       val = "";
+    }
     _variables[name] = val;
   }
   static std::string _delimit(const std::string &name) {
@@ -223,5 +223,4 @@ inline std::vector<std::string> ArgumentParser::getv<std::string>(
   std::string argstr = get<std::string>(name);
   return _split(argstr, "\\s");
 }
-
 #endif
