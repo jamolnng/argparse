@@ -26,6 +26,7 @@ int main(int argc, char* argv[]) {
   parser.add_argument("-f", "an combined flag", true);
   parser.add_argument("--flag", "a flag");
   parser.add_argument("-v", "a vector", true);
+  parser.add_argument("-l", "--long", "a long argument", false);
   try {
     parser.parse(argc, argv);
   } catch (const ArgumentParser::ArgumentNotFound& ex) {
@@ -34,8 +35,8 @@ int main(int argc, char* argv[]) {
   }
   if (parser.is_help()) return 0;
   std::cout << parser.get<int>("a") << std::endl;
-  std::cout << (parser.get<bool>("flag") ? "true" : "false") << std::endl;
-  std::cout << (parser.get<bool>("d") ? "true" : "false") << std::endl;
+  std::cout << std::boolalpha << parser.get<bool>("flag") << std::endl;
+  std::cout << std::boolalpha << parser.get<bool>("d") << std::endl;
   auto v = parser.getv<double>("v");
   std::copy(v.begin(), v.end(), std::ostream_iterator<double>(std::cout, " "));
   if (v.size()) std::cout << std::endl;

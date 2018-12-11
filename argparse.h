@@ -48,8 +48,14 @@ class ArgumentParser {
     parse(argc, argv);
   }
 
+  void add_argument(const std::string &name, const std::string &long_name,
+                    const std::string &desc, const bool required = false) {
+    _arguments.push_back({name, desc, required});
+    _pairs[name] = long_name;
+  }
+
   void add_argument(const std::string &name, const std::string &desc,
-                    bool required = false) {
+                    const bool required = false) {
     _arguments.push_back({name, desc, required});
   }
 
@@ -59,9 +65,11 @@ class ArgumentParser {
     std::cout << "Usage: " << f << " [options]" << std::endl;
     std::cout << "Options:" << std::endl;
     for (auto &a : _arguments) {
-      std::cout << "    " << std::setw(23) << std::left << a._name
-                << std::setw(23) << a._desc + (a._required ? " (Required)" : "")
-                << std::endl;
+      std::string name = a._name;
+      auto i = _pairs.find(name);
+      if (i != _pairs.end()) name.append(", " + i->second);
+      std::cout << "    " << std::setw(23) << std::left << name << std::setw(23)
+                << a._desc + (a._required ? " (Required)" : "") << std::endl;
     }
   }
 
@@ -101,7 +109,9 @@ class ArgumentParser {
   }
 
   bool exists(const std::string &name) {
-    return _variables.find(_delimit(name)) != _variables.end();
+    std::string t = _delimit(name);
+    if (_pairs.find(t) != _pairs.end()) t = _pairs[t];
+    return _variables.find(t) != _variables.end();
   }
 
   template <typename T>
@@ -134,7 +144,7 @@ class ArgumentParser {
     std::string _desc;
     bool _required;
   };
-  inline bool _add_variable(std::string name,
+  inline void _add_variable(std::string name,
                             std::vector<std::string> &arg_parts, char *argv[]) {
     if (name == "h" || name == "-help") {
       _help = true;
@@ -142,6 +152,7 @@ class ArgumentParser {
     }
     _ltrim(name, [](int c) { return c != (int)'-'; });
     name = _delimit(name);
+    if (_pairs.find(name) != _pairs.end()) name = _pairs[name];
     std::string val;
     if (arg_parts.size() > 1) {
       val = std::accumulate(arg_parts.begin() + 1, arg_parts.end(),
@@ -207,14 +218,17 @@ class ArgumentParser {
     return s;
   }
 
-  bool _help;
   std::string _desc;
+  bool _help;
   std::vector<Argument> _arguments;
   std::unordered_map<std::string, std::string> _variables;
+  std::unordered_map<std::string, std::string> _pairs;
 };
 template <>
 inline std::string ArgumentParser::get<std::string>(const std::string &name) {
-  auto v = _variables.find(_delimit(name));
+  std::string t = _delimit(name);
+  if (_pairs.find(t) != _pairs.end()) t = _pairs[t];
+  auto v = _variables.find(t);
   if (v != _variables.end()) return v->second;
   return "";
 }
