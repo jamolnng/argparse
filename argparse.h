@@ -19,11 +19,11 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <locale>
 #include <numeric>
-#include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -61,8 +61,8 @@ class ArgumentParser {
 
   bool is_help() { return _help; }
 
-  void print_help(char *f) {
-    std::cout << "Usage: " << f << " [options]" << std::endl;
+  void print_help() {
+    std::cout << "Usage: " << _bin << " [options]" << std::endl;
     std::cout << "Options:" << std::endl;
     for (auto &a : _arguments) {
       std::string name = a._name;
@@ -74,28 +74,44 @@ class ArgumentParser {
   }
 
   void parse(int argc, char *argv[]) {
+    _bin = argv[0];
     if (argc > 1) {
-      std::vector<std::string> argsvec(argv + 1, argv + argc);
-      std::string argstr =
-          std::accumulate(argsvec.begin(), argsvec.end(), std::string(),
-                          [](std::string a, std::string b) {
-                            return a + " " + std::string(b);
-                          });
-      std::vector<std::string> split_args = _split(argstr, "^-|\\s-");
-      std::vector<std::string> arg_parts;
       std::string name;
-      for (auto &split_arg : split_args) {
-        std::vector<std::string> arg_parts = _split(split_arg, "\\s+");
-        name = _trim_copy(arg_parts[0]);
-        if (name.empty()) continue;
-        if (name[0] == '-') {
-          _add_variable(name, arg_parts, argv);
+      std::vector<std::string> arg_parts;
+      std::vector<std::string> free_args;
+      auto push_arg = [&name, &arg_parts, this]() {
+        if (!name.empty()) {
+          if (name[0] == '-') {
+            _add_variable(name, arg_parts);
+          } else {
+            for (char c : name) {
+              _add_variable(std::string(1, c), arg_parts);
+            }
+          }
+          arg_parts.clear();
+        }
+      };
+      for (int i = 1; i < argc; i++) {
+        if (std::strlen(argv[i]) == 0) {
+          continue;
+        } else if (argv[i][0] == '-') {
+          push_arg();
+          if (i == argc - 1) {
+            name = &(argv[i][1]);
+            push_arg();
+          } else {
+            name = &(argv[i][1]);
+          }
+        } else if (name.empty()) {
+          free_args.push_back(argv[i]);
         } else {
-          for (auto c : name) {
-            _add_variable(std::string(1, c), arg_parts, argv);
+          arg_parts.push_back(argv[i]);
+          if (i == argc - 1) {
+            push_arg();
           }
         }
       }
+      _add_variable("", free_args);
     }
     if (!_help) {
       for (auto &a : _arguments) {
@@ -116,11 +132,14 @@ class ArgumentParser {
 
   template <typename T>
   std::vector<T> getv(const std::string &name) {
-    std::string argstr = get<std::string>(name);
+    std::vector<std::string> argstr = getv<std::string>(name);
     std::vector<T> v;
-    std::istringstream in(argstr);
-    std::copy(std::istream_iterator<T>(in), std::istream_iterator<T>(),
-              std::back_inserter(v));
+    for (auto &s : argstr) {
+      std::istringstream in(s);
+      T t;
+      in >> t;
+      v.push_back(t);
+    }
     return v;
   }
 
@@ -145,24 +164,15 @@ class ArgumentParser {
     bool _required;
   };
   inline void _add_variable(std::string name,
-                            std::vector<std::string> &arg_parts, char *argv[]) {
+                            std::vector<std::string> &arg_parts) {
     if (name == "h" || name == "-help") {
       _help = true;
-      print_help(argv[0]);
+      print_help();
     }
     _ltrim(name, [](int c) { return c != (int)'-'; });
     name = _delimit(name);
     if (_pairs.find(name) != _pairs.end()) name = _pairs[name];
-    std::string val;
-    if (arg_parts.size() > 1) {
-      val = std::accumulate(arg_parts.begin() + 1, arg_parts.end(),
-                            std::string(), [](std::string a, std::string b) {
-                              return _trim_copy(a) + " " + _trim_copy(b);
-                            });
-    } else {
-      val = "";
-    }
-    _variables[name] = val;
+    _variables[name] = arg_parts;
   }
   static std::string _delimit(const std::string &name) {
     return std::string(std::min(name.size(), (size_t)2), '-').append(name);
@@ -183,13 +193,6 @@ class ArgumentParser {
     if (in.find(' ') != std::string::npos)
       out = std::string("\"").append(out).append("\"");
     return out;
-  }
-  static std::vector<std::string> _split(const std::string &input,
-                                         const std::string &regex) {
-    // passing -1 as the submatch index parameter performs splitting
-    std::regex re(regex);
-    std::sregex_token_iterator first{input.begin(), input.end(), re, -1}, last;
-    return {first, last};
   }
   static bool _not_space(int ch) { return !std::isspace(ch); }
   static inline void _ltrim(std::string &s, bool (*f)(int) = _not_space) {
@@ -219,9 +222,10 @@ class ArgumentParser {
   }
 
   std::string _desc;
+  std::string _bin;
   bool _help;
   std::vector<Argument> _arguments;
-  std::unordered_map<std::string, std::string> _variables;
+  std::unordered_map<std::string, std::vector<std::string>> _variables;
   std::unordered_map<std::string, std::string> _pairs;
 };
 template <>
@@ -229,7 +233,11 @@ inline std::string ArgumentParser::get<std::string>(const std::string &name) {
   std::string t = _delimit(name);
   if (_pairs.find(t) != _pairs.end()) t = _pairs[t];
   auto v = _variables.find(t);
-  if (v != _variables.end()) return v->second;
+  if (v != _variables.end()) {
+    return std::accumulate(
+        v->second.begin(), v->second.end(), std::string(),
+        [](std::string a, std::string b) { return a + " " + b; });
+  }
   return "";
 }
 template <>
@@ -239,7 +247,12 @@ inline bool ArgumentParser::get<bool>(const std::string &name) {
 template <>
 inline std::vector<std::string> ArgumentParser::getv<std::string>(
     const std::string &name) {
-  std::string argstr = get<std::string>(name);
-  return _split(argstr, "\\s");
+  std::string t = _delimit(name);
+  if (_pairs.find(t) != _pairs.end()) t = _pairs[t];
+  auto v = _variables.find(t);
+  if (v != _variables.end()) {
+    return v->second;
+  }
+  return std::vector<std::string>();
 }
 #endif
