@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
   parser.add_argument("--flag", "a flag");
   parser.add_argument("-v", "a vector", true);
   parser.add_argument("-l", "--long", "a long argument", false);
-  parser.add_argument("-o", "input files", false);
+  parser.add_argument("--files", "input files", false);
   try {
     parser.parse(argc, argv);
   } catch (const ArgumentParser::ArgumentNotFound& ex) {
@@ -51,8 +51,8 @@ int main(int argc, char* argv[]) {
   double sum;
   for (auto& d : v) sum += d;
   std::cout << " sum: " << sum << std::endl;
-  auto f = parser.getv<std::string>("o");
-  std::cout << "o: ";
+  auto f = parser.getv<std::string>("files");
+  std::cout << "files: ";
   std::copy(f.begin(), f.end(),
             std::ostream_iterator<std::string>(std::cout, " | "));
   std::cout << std::endl;
