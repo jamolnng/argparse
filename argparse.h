@@ -92,9 +92,10 @@ class ArgumentParser {
         }
       };
       for (int i = 1; i < argc; i++) {
-        if (std::strlen(argv[i]) == 0) {
+        size_t slen = std::strlen(argv[i]);
+        if (slen == 0) {
           continue;
-        } else if (argv[i][0] == '-') {
+        } else if (slen >= 2 && argv[i][0] == '-' && !isnumber(argv[i], slen)) {
           push_arg();
           if (i == argc - 1) {
             name = &(argv[i][1]);
@@ -219,6 +220,24 @@ class ArgumentParser {
                                        bool (*f)(int) = _not_space) {
     _trim(s, f);
     return s;
+  }
+  static inline bool isnumber(const char *arg, size_t len) {
+    if (std::isdigit(arg[0])) {
+      return true;
+    } else if (len >= 2) {
+      if (arg[0] == '-') {
+        if (std::isdigit(arg[1])) {
+          return true;
+        } else if (len >= 3) {
+          if (arg[1] == '.') {
+            if (std::isdigit(arg[2])) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   std::string _desc;

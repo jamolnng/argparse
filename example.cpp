@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
   auto v = parser.getv<double>("v");
   std::cout << "v: ";
   std::copy(v.begin(), v.end(), std::ostream_iterator<double>(std::cout, " "));
-  double sum;
+  double sum = 0;
   for (auto& d : v) sum += d;
   std::cout << " sum: " << sum << std::endl;
   auto f = parser.getv<std::string>("files");
