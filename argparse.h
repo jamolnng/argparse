@@ -95,7 +95,8 @@ class ArgumentParser {
         size_t slen = std::strlen(argv[i]);
         if (slen == 0) {
           continue;
-        } else if (slen >= 2 && argv[i][0] == '-' && !isnumber(argv[i], slen)) {
+        } else if (slen >= 2 && argv[i][0] == '-' &&
+                   !_is_number(argv[i], slen)) {
           push_arg();
           if (i == argc - 1) {
             name = &(argv[i][1]);
@@ -221,7 +222,20 @@ class ArgumentParser {
     _trim(s, f);
     return s;
   }
-  static inline bool isnumber(const char *arg, size_t len) {
+  template <typename InputIt>
+  inline std::string _join(InputIt begin, InputIt end,
+                           const std::string &separator = " ") {
+    std::ostringstream ss;
+    if (begin != end) {
+      ss << *begin++;
+    }
+    while (begin != end) {
+      ss << separator;
+      ss << *begin++;
+    }
+    return ss.str();
+  }
+  static inline bool _is_number(const char *arg, size_t len) {
     if (std::isdigit(arg[0])) {
       return true;
     } else if (len >= 2) {
@@ -253,9 +267,7 @@ inline std::string ArgumentParser::get<std::string>(const std::string &name) {
   if (_pairs.find(t) != _pairs.end()) t = _pairs[t];
   auto v = _variables.find(t);
   if (v != _variables.end()) {
-    return std::accumulate(
-        v->second.begin(), v->second.end(), std::string(),
-        [](std::string a, std::string b) { return a + " " + b; });
+    return _join(v->second.begin(), v->second.end());
   }
   return "";
 }

@@ -50,12 +50,13 @@ int main(int argc, char* argv[]) {
   std::copy(v.begin(), v.end(), std::ostream_iterator<double>(std::cout, " "));
   double sum = 0;
   for (auto& d : v) sum += d;
-  std::cout << " sum: " << sum << std::endl;
+  std::cout << "sum: " << sum << std::endl;
   auto f = parser.getv<std::string>("files");
   std::cout << "files: ";
   std::copy(f.begin(), f.end(),
             std::ostream_iterator<std::string>(std::cout, " | "));
   std::cout << std::endl;
+  std::cout << parser.get<std::string>("files") << std::endl;
   f = parser.getv<std::string>("");
   std::cout << "free args: ";
   std::copy(f.begin(), f.end(),
