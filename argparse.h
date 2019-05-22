@@ -95,8 +95,7 @@ class ArgumentParser {
         size_t slen = std::strlen(argv[i]);
         if (slen == 0) {
           continue;
-        } else if (slen >= 2 && argv[i][0] == '-' &&
-                   !_is_number(argv[i], slen)) {
+        } else if (slen >= 2 && argv[i][0] == '-' && !_is_number(argv[i])) {
           push_arg();
           if (i == argc - 1) {
             name = &(argv[i][1]);
@@ -235,23 +234,11 @@ class ArgumentParser {
     }
     return ss.str();
   }
-  static inline bool _is_number(const char *arg, size_t len) {
-    if (std::isdigit(arg[0])) {
-      return true;
-    } else if (len >= 2) {
-      if (arg[0] == '-') {
-        if (std::isdigit(arg[1])) {
-          return true;
-        } else if (len >= 3) {
-          if (arg[1] == '.') {
-            if (std::isdigit(arg[2])) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-    return false;
+  static inline bool _is_number(const char *arg) {
+    std::istringstream iss{std::string(arg)};
+    float f;
+    iss >> std::noskipws >> f;
+    return iss.eof() && !iss.fail();
   }
 
   std::string _desc;
