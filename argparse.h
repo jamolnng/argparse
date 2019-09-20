@@ -37,9 +37,11 @@ class ArgumentParser {
  public:
   class ArgumentNotFound : public std::runtime_error {
    public:
-    ArgumentNotFound(ArgumentParser::Argument &arg) noexcept
+    ArgumentNotFound(ArgumentParser::Argument &arg,
+        std::unordered_map<std::string, std::string> pairs) noexcept
         : std::runtime_error(
-              ("Required argument not found: " + arg._name).c_str()) {}
+              ("Required argument not found: " + arg._name + ((pairs.find(arg._name) == pairs.end())
+              ? "" : " or " + pairs.find(arg._name)->second)).c_str()) {}
   };
 
   ArgumentParser(const std::string &desc) : _desc(desc), _help(false) {}
@@ -117,8 +119,9 @@ class ArgumentParser {
     if (!_help) {
       for (auto &a : _arguments) {
         if (a._required) {
-          if (_variables.find(a._name) == _variables.end()) {
-            throw ArgumentNotFound(a);
+          if (_variables.find(a._name) == _variables.end()
+              && _variables.find(_pairs.find(a._name)->second) == _variables.end()) {
+            throw ArgumentNotFound(a, _pairs);
           }
         }
       }
