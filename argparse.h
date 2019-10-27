@@ -120,7 +120,7 @@ class ArgumentParser {
       for (auto &a : _arguments) {
         if (a._required) {
           if (_variables.find(a._name) == _variables.end()
-              && _variables.find(_pairs.find(a._name)->second) == _variables.end()) {
+              && (_pairs.find(a._name) == _pairs.end() ||  _variables.find(_pairs.find(a._name)->second) == _variables.end())) {
             throw ArgumentNotFound(a, _pairs);
           }
         }
