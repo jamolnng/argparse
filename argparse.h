@@ -119,9 +119,14 @@ class ArgumentParser {
     if (!_help) {
       for (auto &a : _arguments) {
         if (a._required) {
-          if (_variables.find(a._name) == _variables.end()
-              && (_pairs.find(a._name) == _pairs.end() ||  _variables.find(_pairs.find(a._name)->second) == _variables.end())) {
-            throw ArgumentNotFound(a, _pairs);
+          if (_variables.find(a._name) == _variables.end()) {
+            // Check if a pair name does not exist. If it does exist check that
+            // there is not a variable with that name
+            if (_pairs.find(a._name) == _pairs.end() ||
+                _variables.find(_pairs.find(a._name)->second) ==
+                    _variables.end()) {
+              throw ArgumentNotFound(a, _pairs);
+            }
           }
         }
       }
