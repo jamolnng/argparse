@@ -1,8 +1,6 @@
 #vs code
 .vscode/*
-
-#spinnaker headers
-spinnaker/
+.vs/*
 
 #cmake
 CMakeCache.txt
@@ -16,6 +14,7 @@ compile_commands.json
 CTestTestfile.cmake
 bin/*
 lib/*
+build/*
 
 #cpp
 # Prerequisites
