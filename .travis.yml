@@ -17,4 +17,5 @@ script:
     - gcc -v && g++ -v && cmake --version
     - mkdir build && cd build
     - cmake ../
-    - ls -a
+    - make
+    - ./tests
