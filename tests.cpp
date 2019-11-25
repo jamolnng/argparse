@@ -23,7 +23,8 @@ struct result {
     char* argv[] = {#name, ##__VA_ARGS__};     \
     int argc = sizeof(argv) / sizeof(argv[0]); \
     ArgumentParser parser(#name);              \
-    code return {true, 0, "", "", ""};         \
+    code;                                      \
+    return {true, 0, "", "", ""};              \
   }
 
 TEST(no_args, {
@@ -82,9 +83,10 @@ TEST(short_required_flag_does_not_exist, {
 #define TT(name) \
   { #name, name }
 using test = std::function<result()>;
-std::map<std::string, test> tests{
-    TT(short_optional_flag_exists), TT(short_optional_flag_does_not_exist),
-    TT(short_required_flag_exists), TT(short_required_flag_does_not_exist)};
+std::map<std::string, test> tests{TT(no_args), TT(short_optional_flag_exists),
+                                  TT(short_optional_flag_does_not_exist),
+                                  TT(short_required_flag_exists),
+                                  TT(short_required_flag_does_not_exist)};
 
 int main(int argc, const char* argv[]) {
   std::vector<result> results;
