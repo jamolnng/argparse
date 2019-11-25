@@ -9,6 +9,9 @@ enable_testing()
 add_library(argparse INTERFACE)
 target_include_directories(argparse INTERFACE .)
 
+add_executable(example example.cpp)
+target_link_libraries(example PRIVATE argparse)
+
 if(ARGPARSE_TEST_ENABLE)
     add_executable(tests tests.cpp)
     add_test(
