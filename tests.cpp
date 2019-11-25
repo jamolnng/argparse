@@ -26,6 +26,14 @@ struct result {
     code return {true, 0, "", "", ""};         \
   }
 
+TEST(no_args, {
+  try {
+    parser.parse(argc, argv);
+  } catch (const ArgumentParser::ArgumentNotFound& ex) {
+    TASSERT(false, ex.what())
+  }
+}, )
+
 TEST(short_optional_flag_exists,
      {
        parser.add_argument("-f", "a flag", false);
@@ -38,17 +46,15 @@ TEST(short_optional_flag_exists,
      },
      "-f")
 
-TEST(short_optional_flag_does_not_exist,
-     {
-       parser.add_argument("-f", "a flag", false);
-       try {
-         parser.parse(argc, argv);
-       } catch (const ArgumentParser::ArgumentNotFound& ex) {
-         TASSERT(false, ex.what())
-       }
-       TASSERT(!parser.exists("f"), "flag found")
-     },
-     "")
+TEST(short_optional_flag_does_not_exist, {
+  parser.add_argument("-f", "a flag", false);
+  try {
+    parser.parse(argc, argv);
+  } catch (const ArgumentParser::ArgumentNotFound& ex) {
+    TASSERT(false, ex.what())
+  }
+  TASSERT(!parser.exists("f"), "flag found")
+}, )
 
 TEST(short_required_flag_exists,
      {
@@ -62,18 +68,16 @@ TEST(short_required_flag_exists,
      },
      "-f")
 
-TEST(short_required_flag_does_not_exist,
-     {
-       parser.add_argument("-f", "a flag", true);
-       bool failed = false;
-       try {
-         parser.parse(argc, argv);
-       } catch (const ArgumentParser::ArgumentNotFound& ex) {
-         failed = true;
-       }
-       TASSERT(failed, "required flag found")
-     },
-     "")
+TEST(short_required_flag_does_not_exist, {
+  parser.add_argument("-f", "a flag", true);
+  bool failed = false;
+  try {
+    parser.parse(argc, argv);
+  } catch (const ArgumentParser::ArgumentNotFound&) {
+    failed = true;
+  }
+  TASSERT(failed, "required flag found")
+}, )
 
 #define TT(name) \
   { #name, name }
@@ -113,5 +117,5 @@ int main(int argc, const char* argv[]) {
     }
   }
   std::cout << "Passed: " << passed << "/" << results.size() << std::endl;
-  return 0;
+  return static_cast<int>(results.size() - passed);
 }
