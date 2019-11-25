@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 cmake_policy(VERSION 3.2)
 option(ARGPARSE_TEST_ENABLE "Build unit tests" ON)
 
-set(ARGPARSE_VERSION "0.9.9")
+set(ARGPARSE_VERSION "0.0.2")
 project(argparse VERSION ${ARGPARSE_VERSION} LANGUAGES CXX)
 enable_testing()
 
