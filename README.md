@@ -1,4 +1,6 @@
 # argparse
+[![Build Status](https://travis-ci.org/jamolnng/argparse.svg?branch=master)](https://travis-ci.org/jamolnng/argparse)
+
 A simple header only command line argument parser
 
 ## Usage
