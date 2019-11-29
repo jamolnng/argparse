@@ -3,8 +3,45 @@
 
 A simple header only command line argument parser
 
-## Usage
-Here is a simple example
+## Usage:
+### Simple example
+```cpp
+#include "argparse.h"
+
+#include <iostream>
+
+int main(int argc, char* argv[]) {
+  ArgumentParser parser("Argument parser example");
+  parser.add_argument("-v",             // short argument
+                      "--verbose",      // long argument
+                      "Verbose level",  // description
+                      false             // is required
+  );
+  parser.parse(argc, argv);
+
+  if (parser.exists("verbose")) {
+    switch (parser.get<unsigned int>("verbose")) {
+      case 2:
+        std::cout << "an even more verbose string" << std::endl;
+      case 1:
+        std::cout << "a verbose string" << std::endl;
+      default:
+        std::cout << "some verbosity" << std::endl;
+    }
+  }
+}
+```
+Example output:
+```
+> program -v 2
+an even more verbose string
+a verbose string
+some verbosity
+> program --verbose
+so much verbosity
+```
+
+### Full example
 
 ```cpp
 #include "argparse.h"
@@ -57,5 +94,13 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-## Compiling
-Just add `argparse.h` to your include path. No longer requires compiler support for `<regex>`
+## Building:
+### In your own project
+Just add `argparse.h` to your include path.
+
+### Example and Tests with CMake
+```
+mkdir build && cd build
+cmake ..
+make
+```
