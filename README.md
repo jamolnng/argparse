@@ -38,7 +38,7 @@ an even more verbose string
 a verbose string
 some verbosity
 > program --verbose
-so much verbosity
+some verbosity
 ```
 
 ### Full example
