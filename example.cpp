@@ -19,7 +19,7 @@
 #include <iostream>
 #include <iterator>
 
-int main(int argc, char* argv[]) {
+int main(int argc, const char* argv[]) {
   // run as: [program name] "0 -c" abc -a 1 -sdfl --flag -v 1 2.7 3 4 9 8.12 87
   // [program name] -sdfv 1 -o "C:\Users\User Name\Directory - Name\file.dat"
   // "C:\Users\User Name 2\Directory 2 - Name 2\file2.dat"

@@ -37,15 +37,18 @@ class ArgumentParser {
  public:
   class ArgumentNotFound : public std::runtime_error {
    public:
-    ArgumentNotFound(ArgumentParser::Argument &arg,
+    ArgumentNotFound(
+        ArgumentParser::Argument &arg,
         std::unordered_map<std::string, std::string> pairs) noexcept
-        : std::runtime_error(
-              ("Required argument not found: " + arg._name + ((pairs.find(arg._name) == pairs.end())
-              ? "" : " or " + pairs.find(arg._name)->second)).c_str()) {}
+        : std::runtime_error(("Required argument not found: " + arg._name +
+                              ((pairs.find(arg._name) == pairs.end())
+                                   ? ""
+                                   : " or " + pairs.find(arg._name)->second))
+                                 .c_str()) {}
   };
 
   ArgumentParser(const std::string &desc) : _desc(desc), _help(false) {}
-  ArgumentParser(const std::string desc, int argc, char *argv[])
+  ArgumentParser(const std::string desc, int argc, const char *argv[])
       : ArgumentParser(desc) {
     parse(argc, argv);
   }
@@ -75,7 +78,7 @@ class ArgumentParser {
     }
   }
 
-  void parse(int argc, char *argv[]) {
+  void parse(int argc, const char *argv[]) {
     _bin = argv[0];
     if (argc > 1) {
       std::string name;
@@ -178,18 +181,19 @@ class ArgumentParser {
       _help = true;
       print_help();
     }
-    _ltrim(name, [](int c) { return c != (int)'-'; });
+    _ltrim(name, [](int c) { return c != static_cast<int>('-'); });
     name = _delimit(name);
     if (_pairs.find(name) != _pairs.end()) name = _pairs[name];
     _variables[name] = arg_parts;
   }
   static std::string _delimit(const std::string &name) {
-    return std::string(std::min(name.size(), (size_t)2), '-').append(name);
+    return std::string(std::min(name.size(), static_cast<size_t>(2)), '-')
+        .append(name);
   }
   static std::string _strip(const std::string &name) {
     size_t begin = 0;
-    begin += name.size() > 0 ? name[0] == '-' : 0;
-    begin += name.size() > 3 ? name[1] == '-' : 0;
+    begin += name.size() > 0 ? name[0] == '-' : 0u;
+    begin += name.size() > 3 ? name[1] == '-' : 0u;
     return name.substr(begin);
   }
   static std::string _upper(const std::string &in) {
@@ -250,11 +254,11 @@ class ArgumentParser {
   }
 
   std::string _desc;
-  std::string _bin;
-  bool _help;
-  std::vector<Argument> _arguments;
-  std::unordered_map<std::string, std::vector<std::string>> _variables;
-  std::unordered_map<std::string, std::string> _pairs;
+  std::string _bin{};
+  bool _help{false};
+  std::vector<Argument> _arguments{};
+  std::unordered_map<std::string, std::vector<std::string>> _variables{};
+  std::unordered_map<std::string, std::string> _pairs{};
 };
 template <>
 inline std::string ArgumentParser::get<std::string>(const std::string &name) {
