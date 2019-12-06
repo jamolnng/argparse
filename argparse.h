@@ -44,7 +44,6 @@ namespace filesystem = std::experimental::filesystem;
 #else
 #include <filesystem>
 #endif
-#endif
 
 namespace argparse {
 namespace detail {
