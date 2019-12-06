@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <cctype>
 #include <cstring>
-#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <locale>
@@ -31,6 +30,21 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#if defined(__GNUC__) && __GNUC__ < 8
+#include <experimental/filesystem>
+namespace std {
+namespace filesystem = std::experimental::filesystem;
+}
+#elif defined(_MSC_VER) && _MSVC_LANG < 201703L
+#include <filesystem>
+namespace std {
+namespace filesystem = std::experimental::filesystem;
+}  // namespace std
+#else
+#include <filesystem>
+#endif
+#endif
 
 namespace argparse {
 namespace detail {
@@ -355,7 +369,7 @@ class ArgumentParser {
   std::unordered_map<std::string, std::vector<std::string>> _variables{};
   std::unordered_map<std::string, std::string> _pairs{};
 
-  std::map<std::string, int> _name_map;
+  std::map<std::string, size_t> _name_map{};
 };
 
 template <>
