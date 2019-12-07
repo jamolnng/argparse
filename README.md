@@ -52,10 +52,16 @@ int main(int argc, const char* argv[]) {
       .names({"-v", "--verbose"})
       .description("verbose level")
       .required(true);
+  parser.enable_help();
   auto err = parser.parse(argc, argv);
   if (err) {
     std::cout << err.what() << std::endl;
     return -1;
+  }
+
+  if (parser.exists("help")) {
+    parser.print_help();
+    return 0;
   }
 
   if (parser.exists("v")) {
@@ -73,7 +79,7 @@ int main(int argc, const char* argv[]) {
 }
 ```
 Example output:
-```bash
+```
 > program -v 2
 an even more verbose string
 a verbose string
@@ -86,6 +92,11 @@ some verbosity
 > program --verbose=1
 a verbose string
 some verbosity
+> program -h
+Usage: program [options] 
+Options:
+    -v, --verbose          verbose level           (Required)
+    -h, --help             Shows this page        
 ```
 ## Running Tests
 ### <a name="test-make"></a>Make
