@@ -10,6 +10,7 @@ A simple header only command line argument parser
     * [Make](#build-make)
     * [VSCode and CMake Tools](#build-vscode)
     * [Visual Studio](#build-vsc)
+- [Example](#Example)
 - [Usage](#Usage)
 - [Running Tests](#Running-Tests)
     * [Make](#test-make)
@@ -37,7 +38,7 @@ TODO
 [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/)
 
 TODO
-## Usage
+## Example
 ```cpp
 #include "argparse.h"
 
@@ -55,7 +56,7 @@ int main(int argc, const char* argv[]) {
   parser.enable_help();
   auto err = parser.parse(argc, argv);
   if (err) {
-    std::cout << err.what() << std::endl;
+    std::cout << err << std::endl;
     return -1;
   }
 
@@ -84,20 +85,25 @@ Example output:
 an even more verbose string
 a verbose string
 some verbosity
+
 > program -v=1
 a verbose string
 some verbosity
+
 > program --verbose
 some verbosity
-> program --verbose=1
-a verbose string
-some verbosity
+
 > program -h
 Usage: program [options] 
 Options:
     -v, --verbose          verbose level           (Required)
     -h, --help             Shows this page        
+
+> program
+Required argument not found: -v
 ```
+## Usage
+TODO
 ## Running Tests
 ### <a name="test-make"></a>Make
 ```bash

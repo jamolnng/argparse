@@ -453,6 +453,10 @@ class ArgumentParser {
   std::map<std::string, size_t> _name_map{};
 };
 
+std::ostream &operator<<(std::ostream &os, const ArgumentParser::Result &r) {
+  os << r.what();
+  return os;
+}
 template <>
 inline std::string ArgumentParser::Argument::get<std::string>() {
   return detail::_join(_values.begin(), _values.end());

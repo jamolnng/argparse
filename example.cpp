@@ -30,7 +30,7 @@ int main(int argc, const char* argv[]) {
   parser.enable_help();
   auto err = parser.parse(argc, argv);
   if (err) {
-    std::cout << err.what() << std::endl;
+    std::cout << err << std::endl;
     return -1;
   }
 
