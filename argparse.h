@@ -169,6 +169,8 @@ class ArgumentParser {
 
     operator bool() const { return _error; }
 
+    friend std::ostream &operator<<(std::ostream &os, const Result &dt);
+
     const std::string &what() const { return _what; }
 
    private:
