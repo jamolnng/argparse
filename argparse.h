@@ -340,7 +340,7 @@ class ArgumentParser {
         }
       }
     }
-    if (_help_enabled && _help) {
+    if (_help_enabled && exists("help")) {
       return Result();
     }
     for (auto &a : _arguments) {
@@ -446,7 +446,6 @@ class ArgumentParser {
   }
 
   bool _help_enabled{false};
-  bool _help{false};
   int _current{0};
   std::string _desc{};
   std::string _bin{};
