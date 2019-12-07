@@ -42,22 +42,30 @@ TODO
 #include "argparse.h"
 
 #include <iostream>
+#include <iterator>
 
-int main(int argc, char* argv[]) {
+using namespace argparse;
+
+int main(int argc, const char* argv[]) {
   ArgumentParser parser("Argument parser example");
-  parser.add_argument("-v",             // short argument
-                      "--verbose",      // long argument
-                      "Verbose level",  // description
-                      false             // is required
-  );
-  parser.parse(argc, argv);
+  parser.add_argument()
+      .names({"-v", "--verbose"})
+      .description("verbose level")
+      .required(true);
+  auto err = parser.parse(argc, argv);
+  if (err) {
+    std::cout << err.what() << std::endl;
+    return -1;
+  }
 
-  if (parser.exists("verbose")) {
-    switch (parser.get<unsigned int>("verbose")) {
+  if (parser.exists("v")) {
+    switch (parser.get<unsigned int>("v")) {
       case 2:
         std::cout << "an even more verbose string" << std::endl;
+        // fall through
       case 1:
         std::cout << "a verbose string" << std::endl;
+        // fall through
       default:
         std::cout << "some verbosity" << std::endl;
     }
@@ -70,7 +78,13 @@ Example output:
 an even more verbose string
 a verbose string
 some verbosity
+> program -v=1
+a verbose string
+some verbosity
 > program --verbose
+some verbosity
+> program --verbose=1
+a verbose string
 some verbosity
 ```
 ## Running Tests
