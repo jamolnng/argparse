@@ -38,8 +38,14 @@ int main(int argc, const char* argv[]) {
     switch (parser.get<unsigned int>("v")) {
       case 2:
         std::cout << "an even more verbose string" << std::endl;
+#ifdef __GNUC__
+        __attribute__((fallthrough));
+#endif
       case 1:
         std::cout << "a verbose string" << std::endl;
+#ifdef __GNUC__
+        __attribute__((fallthrough));
+#endif
       default:
         std::cout << "some verbosity" << std::endl;
     }

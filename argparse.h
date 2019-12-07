@@ -153,7 +153,7 @@ struct is_vector<std::vector<Args...>> : std::true_type {};
 template <typename T>
 struct is_vector {
   static constexpr bool const value =
-      is_vector_impl::is_vector<std::decay_t<T>>::value;
+      is_vector_impl::is_vector<typename std::decay<T>::type>::value;
 };
 }  // namespace detail
 
@@ -216,9 +216,9 @@ class ArgumentParser {
     template <typename T>
     typename std::enable_if<detail::is_vector<T>::value, T>::type get() {
       T t = T();
+      typename T::value_type vt;
       for (auto &s : _values) {
         std::istringstream in(s);
-        T::value_type vt;
         in >> vt;
         t.push_back(vt);
       }
@@ -387,8 +387,8 @@ class ArgumentParser {
       if (nmf == _name_map.end()) {
         return Result("Unrecognized command line option '" + arg_name + "'");
       }
-      _current = &_arguments[nmf->second];
-      _current->_found = true;
+      _current = static_cast<int>(nmf->second);
+      _arguments[nmf->second]._found = true;
       if (equal_pos == 0 ||
           (equal_pos < 0 &&
            arg_name.length() < arg.length())) {  // malformed argument
@@ -418,15 +418,18 @@ class ArgumentParser {
   }
 
   Result _add_value(const std::string &value) {
-    if (_current != nullptr) {
-      if (_current->_count != Argument::Count::ANY &&
-          _current->_values.size() > _current->_count) {
+    if (_current >= 0) {
+      size_t c = static_cast<size_t>(_current);
+      if (_arguments[c]._count != Argument::Count::ANY &&
+          static_cast<int>(_arguments[c]._values.size()) >
+              _arguments[c]._count) {
         _end_argument();
         goto unnamed;
       }
-      _current->_values.push_back(value);
-      if (_current->_count != Argument::Count::ANY &&
-          _current->_values.size() >= _current->_count) {
+      _arguments[c]._values.push_back(value);
+      if (_arguments[c]._count != Argument::Count::ANY &&
+          static_cast<int>(_arguments[c]._values.size()) >=
+              _arguments[c]._count) {
         _end_argument();
       }
       return Result();
@@ -438,13 +441,13 @@ class ArgumentParser {
   }
 
   Result _end_argument() {
-    _current = nullptr;
+    _current = -1;
     return Result();
   }
 
   bool _help_enabled{false};
   bool _help{false};
-  Argument *_current{nullptr};
+  int _current{0};
   std::string _desc{};
   std::string _bin{};
   std::vector<Argument> _arguments{};
