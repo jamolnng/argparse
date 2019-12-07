@@ -39,12 +39,12 @@ int main(int argc, const char* argv[]) {
       case 2:
         std::cout << "an even more verbose string" << std::endl;
 #ifdef __GNUC__
-        __attribute__((fallthrough));
+        [[gnu::fallthrough]];
 #endif
       case 1:
         std::cout << "a verbose string" << std::endl;
 #ifdef __GNUC__
-        __attribute__((fallthrough));
+        [[gnu::fallthrough]];
 #endif
       default:
         std::cout << "some verbosity" << std::endl;
