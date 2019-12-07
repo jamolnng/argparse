@@ -155,7 +155,7 @@ TEST(
       TASSERT(!err, err.what())
 
       TASSERT(parser.exists("v"), "flag not found")
-      auto v = parser.getv<int>("v");
+      auto v = parser.get<std::vector<int>>("v");
       TASSERT(v.size() == 0, "wrong vector values")
     },
     "-v")
@@ -169,7 +169,7 @@ TEST(
       TASSERT(!err, err.what())
 
       TASSERT(parser.exists("v"), "flag not found")
-      auto v = parser.getv<int>("v");
+      auto v = parser.get<std::vector<int>>("v");
       TASSERT(v.size() == 5, "wrong vector values")
     },
     "-v", "1", "2", "3", "4", "5")
@@ -187,41 +187,39 @@ TEST(
       TASSERT(parser.exists("b"), "flag not found")
       TASSERT(parser.exists("v"), "flag not found")
       TASSERT(parser.exists("f"), "flag not found")
-      auto v = parser.getv<int>("v");
+      auto v = parser.get<std::vector<int>>("v");
       TASSERT(v.size() == 5, "wrong vector values")
     },
     "-b", "0", "-v", "1", "2", "3", "4", "5", "-f", "6", "7", "8")
 
-// TEST(
-//     short_help_flag,
-//     {
-//       try {
-//         parser.parse(argc, argv);
-//       } catch (const ArgumentParser::ArgumentNotFound& ex) {
-//         TASSERT(false, ex.what())
-//       }
-//       TASSERT(parser.is_help(), "help not found")
-//     },
-//     "-h")
+TEST(
+    short_help_flag,
+    {
+      parser.enable_help();
+      auto err = parser.parse(argc, argv);
+      TASSERT(!err, err.what())
+      TASSERT(parser.exists("h"), "help not found")
+      parser.print_help();
+    },
+    "-h")
 
-// TEST(
-//     long_help_flag,
-//     {
-//       try {
-//         parser.parse(argc, argv);
-//       } catch (const ArgumentParser::ArgumentNotFound& ex) {
-//         TASSERT(false, ex.what())
-//       }
-//       TASSERT(parser.is_help(), "help not found")
-//     },
-//     "--help")
+TEST(
+    long_help_flag,
+    {
+      parser.enable_help();
+      auto err = parser.parse(argc, argv);
+      TASSERT(!err, err.what())
+      TASSERT(parser.exists("help"), "help not found")
+      parser.print_help();
+    },
+    "--help")
 
 TEST(
     flag_values,
     {
-      parser.add_argument("-f", "--flag", "a flag", false);
-      parser.add_argument("-t", "--test", "a flag", false);
-      parser.add_argument("-g", "a flag", false);
+      parser.add_argument("-f", "--flag", "a flag", true);
+      parser.add_argument("-t", "--test", "a flag", true);
+      parser.add_argument("-g", "a flag", true);
 
       auto err = parser.parse(argc, argv);
       TASSERT(!err, err.what())
@@ -239,45 +237,62 @@ TEST(
 #define TT(name) \
   { #name, name }
 using test = std::function<result()>;
-std::map<std::string, test> tests{
-    TT(no_args), TT(short_optional_flag_exists),
-    TT(short_optional_flag_does_not_exist), TT(short_required_flag_exists),
-    TT(short_required_flag_does_not_exist), TT(long_optional_flag_exists),
-    TT(long_short_optional_flag_pair_exists), TT(short_combined_flags),
-    TT(vector_flag_empty), TT(vector_flag), TT(short_and_vector_flag),
-    TT(long_required_flag_exists), TT(long_required_flag_does_not_exist),
-    // TT(short_help_flag),
-    // TT(long_help_flag),
-    TT(flag_values)};
+std::map<std::string, test> tests{TT(no_args),
+                                  TT(short_optional_flag_exists),
+                                  TT(short_optional_flag_does_not_exist),
+                                  TT(short_required_flag_exists),
+                                  TT(short_required_flag_does_not_exist),
+                                  TT(long_optional_flag_exists),
+                                  TT(long_short_optional_flag_pair_exists),
+                                  TT(short_combined_flags),
+                                  TT(vector_flag_empty),
+                                  TT(vector_flag),
+                                  TT(short_and_vector_flag),
+                                  TT(long_required_flag_exists),
+                                  TT(long_required_flag_does_not_exist),
+                                  TT(short_help_flag),
+                                  TT(long_help_flag),
+                                  TT(flag_values)};
 
 int main(int argc, const char* argv[]) {
   std::vector<result> results;
+  size_t passed = 0;
   if (argc > 1) {
     for (auto i = 1; i < argc; i++) {
       auto t = tests.find(argv[i]);
       if (t != tests.end()) {
-        results.push_back(t->second());
-        results.back().test = t->first.c_str();
+        std::cout << t->first << std::endl;
+        result r = t->second();
+        r.test = t->first;
+        if (!r.pass) {
+          std::cout << "***********************FAILURE***********************"
+                    << std::endl
+                    << "Line " << r.line << ": " << r.condition << std::endl
+                    << r.msg << std::endl
+                    << "*****************************************************"
+                    << std::endl
+                    << std::endl;
+        }
+        results.push_back(r);
+        passed += static_cast<size_t>(r.pass);
       }
     }
   } else {
     for (auto& t : tests) {
-      results.push_back(t.second());
-      results.back().test = t.first.c_str();
-    }
-  }
-  size_t passed = 0;
-  for (auto& r : results) {
-    passed += static_cast<size_t>(r.pass);
-    std::cout << r.test << ": " << (r.pass ? "pass" : "fail") << std::endl;
-    if (!r.pass) {
-      std::cout << "****************************************************"
-                << std::endl
-                << "Line " << r.line << ": " << r.condition << std::endl
-                << r.msg << std::endl
-                << "****************************************************"
-                << std::endl
-                << std::endl;
+      std::cout << t.first << std::endl;
+      result r = t.second();
+      r.test = t.first;
+      if (!r.pass) {
+        std::cout << "***********************FAILURE***********************"
+                  << std::endl
+                  << "Line " << r.line << ": " << r.condition << std::endl
+                  << r.msg << std::endl
+                  << "*****************************************************"
+                  << std::endl
+                  << std::endl;
+      }
+      results.push_back(r);
+      passed += static_cast<size_t>(r.pass);
     }
   }
   std::cout << "Passed: " << passed << "/" << results.size() << std::endl;
