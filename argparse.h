@@ -245,7 +245,6 @@ class ArgumentParser {
     Argument() {}
 
     friend class ArgumentParser;
-    friend class ArgumentNotFound;
     int _position{Position::DONT_CARE};
     int _count{Count::ANY};
     std::vector<std::string> _names{};
@@ -378,8 +377,6 @@ class ArgumentParser {
   }
 
  private:
-  friend class ArgumentNotFound;
-
   Result _begin_argument(const std::string &arg, bool longarg) {
     size_t name_end = detail::_find_name_end(arg);
     std::string arg_name = arg.substr(0, name_end);
