@@ -104,6 +104,10 @@ Required argument not found: -v
 ```
 ## Usage
 TODO
+## TODO
+- [ ] Positional argumeents
+- [ ] More error checking
+- [ ] Think of more things to do
 ## Running Tests
 ### <a name="test-make"></a>Make
 ```bash
