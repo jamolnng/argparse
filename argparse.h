@@ -445,7 +445,7 @@ class ArgumentParser {
   }
 
   bool _help_enabled{false};
-  int _current{0};
+  int _current{-1};
   std::string _desc{};
   std::string _bin{};
   std::vector<Argument> _arguments{};
