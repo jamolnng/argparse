@@ -310,6 +310,7 @@ class ArgumentParser {
       // parse
       std::string current_arg;
       size_t arg_len;
+      Result err;
       for (int argv_index = 1; argv_index < argc; ++argv_index) {
         current_arg = std::string(argv[argv_index]);
         arg_len = current_arg.length();
@@ -321,23 +322,33 @@ class ArgumentParser {
                 current_arg)) {  // ignores the case if the arg is just a -
           // look for -a (short) or --arg (long) args
           if (current_arg[0] == '-') {
+            err = _end_argument();
+            if (err) {
+              return err;
+            }
             // look for --arg (long) args
             if (current_arg[1] == '-') {
-              Result err = _begin_argument(current_arg.substr(2), true);
+              err = _begin_argument(current_arg.substr(2), true);
               if (err) {
                 return err;
               }
             } else {  // short args
-              Result err = _begin_argument(current_arg.substr(1), false);
+              err = _begin_argument(current_arg.substr(1), false);
               if (err) {
                 return err;
               }
             }
           } else {  // argument value
-            _add_value(current_arg);
+            err = _add_value(current_arg);
+            if (err) {
+              return err;
+            }
           }
         } else {  // argument value
-          _add_value(current_arg);
+          err = _add_value(current_arg);
+          if (err) {
+            return err;
+          }
         }
       }
     }
@@ -378,6 +389,9 @@ class ArgumentParser {
 
  private:
   Result _begin_argument(const std::string &arg, bool longarg) {
+    if (_current != -1) {
+      return Result("Current argument left open");
+    }
     size_t name_end = detail::_find_name_end(arg);
     std::string arg_name = arg.substr(0, name_end);
     if (longarg) {
@@ -449,6 +463,7 @@ class ArgumentParser {
   std::string _desc{};
   std::string _bin{};
   std::vector<Argument> _arguments{};
+  std::map<size_t, size_t> _positional_arguments{};
   std::map<std::string, size_t> _name_map{};
 };
 
