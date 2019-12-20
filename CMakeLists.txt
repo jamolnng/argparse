@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 cmake_policy(VERSION 3.2)
 
-set(ARGPARSE_VERSION "0.1.0")
+set(ARGPARSE_VERSION "0.1.1")
 project(argparse VERSION ${ARGPARSE_VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 11)
