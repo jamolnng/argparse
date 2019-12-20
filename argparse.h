@@ -288,24 +288,21 @@ class ArgumentParser {
   void print_help() {
     std::cout << "Usage: " << _bin;
     if (_positional_arguments.empty()) {
-      std::cout << " [options]" << std::endl;
+      std::cout << " [options...]" << std::endl;
     } else {
       int current = 0;
-      int diff;
       for (auto &v : _positional_arguments) {
         if (v.first != Argument::Position::LAST) {
-          diff = v.first - current;
-          for (diff = current; diff < v.first; diff++) {
-            std::cout << " [" << diff << "] ";
+          for (; current < v.first; ++current) {
+            std::cout << " [" << current << "]";
           }
-          std::cout << "["
+          std::cout << " ["
                     << detail::_ltrim_copy(
                            _arguments[static_cast<size_t>(v.second)]._names[0],
                            [](int c) -> bool {
                              return c != static_cast<int>('-');
                            })
                     << "]";
-          current = v.first;
         } else {
           std::cout << " ... ["
                     << detail::_ltrim_copy(
@@ -315,6 +312,10 @@ class ArgumentParser {
                            })
                     << "]";
         }
+      }
+      if (_positional_arguments.find(Argument::Position::LAST) ==
+          _positional_arguments.end()) {
+        std::cout << " [options...]";
       }
       std::cout << std::endl;
     }
