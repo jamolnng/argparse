@@ -3,8 +3,8 @@
 #include <cmath>
 #include <functional>
 #include <iostream>
-#include <map>
 #include <string>
+#include <unordered_map>
 
 using namespace argparse;
 
@@ -234,25 +234,173 @@ TEST(
     },
     "-f", "2", "--test", "3", "-g", "0.125")
 
+TEST(
+    arg_count,
+    {
+      size_t c = 4;
+      parser.add_argument("-f", "--flag", "a flag", true)
+          .count(static_cast<int>(c));
+
+      auto err = parser.parse(argc, argv);
+      TASSERT(!err, err.what())
+
+      TASSERT(parser.get<std::vector<int>>("f").size() == c,
+              "Wrong vector count")
+    },
+    "-f", "a", "b", "1", "2")
+
+TEST(
+    arg_count_more,
+    {
+      // This test should pass because it will treat the last argument as a
+      // free/positional argument
+      size_t c = 4;
+      parser.add_argument("-f", "--flag", "a flag", true)
+          .count(static_cast<int>(c));
+
+      auto err = parser.parse(argc, argv);
+      TASSERT(!err, err.what())
+
+      TASSERT(parser.get<std::vector<int>>("f").size() == c,
+              "Wrong vector count")
+    },
+    "-f", "a", "b", "1", "2", "3")
+
+TEST(
+    arg_count_less,
+    {
+      size_t c = 4;
+      parser.add_argument("-f", "--flag", "a flag", true)
+          .count(static_cast<int>(c));
+      parser.add_argument("-b", "--bbbb", "a flag", true).count(1);
+
+      auto err = parser.parse(argc, argv);
+      TASSERT(err, err.what())
+
+      TASSERT(parser.get<std::vector<int>>("f").size() == c - 1 &&
+                  parser.get<std::vector<int>>("b").size() == 0,
+              "Wrong vector count")
+    },
+    "-f", "a", "b", "1", "-b")
+
+TEST(
+    arg_count_zero,
+    {
+      parser.add_argument("-f", "--flag", "a flag", true).count(0);
+      parser.add_argument("-b", "--bbbb", "a flag", true).count(0);
+      parser.add_argument("-c", "--cccc", "a flag", true).count(0);
+
+      auto err = parser.parse(argc, argv);
+      TASSERT(!err, err.what())
+
+      TASSERT(parser.get<std::vector<int>>("f").size() == 0,
+              "Wrong vector count")
+      TASSERT(parser.get<std::vector<int>>("b").size() == 0,
+              "Wrong vector count")
+      TASSERT(parser.get<std::vector<int>>("c").size() == 0,
+              "Wrong vector count")
+    },
+    "-f", "a", "b", "1", "-b", "a", "-c")
+
+TEST(
+    positional_argument_found,
+    {
+      parser.add_argument("-f", "--flag", "a flag", true).count(0);
+      parser.add_argument().name("--file").position(3);
+
+      auto err = parser.parse(argc, argv);
+      TASSERT(!err, err.what())
+
+      TASSERT(parser.get<std::string>("file") == "myfile",
+              "Positional argument error")
+    },
+    "-f", "1", "2", "myfile", "asdf")
+
+TEST(
+    positional_argument_not_found,
+    {
+      parser.add_argument("-f", "--flag", "a flag", true).count(0);
+      parser.add_argument().name("--file").position(3).required(true);
+
+      auto err = parser.parse(argc, argv);
+      TASSERT(err, err.what())
+    },
+    "-f", "1", "2")
+
+TEST(
+    positional_argument_overrun,
+    {
+      parser.add_argument("-f", "--flag", "a flag", true).count(3);
+      parser.add_argument().name("--file").position(3).required(true);
+
+      auto err = parser.parse(argc, argv);
+      TASSERT(err, err.what())
+    },
+    "-f", "1", "2", "myfile", "asdf")
+
+TEST(
+    positional_argument_last,
+    {
+      parser.add_argument("-f", "--flag", "a flag", true).count(1);
+      parser.add_argument()
+          .name("--file")
+          .position(ArgumentParser::Argument::Position::LAST)
+          .required(true);
+
+      auto err = parser.parse(argc, argv);
+      TASSERT(!err, err.what())
+
+      TASSERT(parser.get<std::string>("file") == "asdf",
+              "Positional argument error")
+    },
+    "-f", "1", "2", "myfile", "asdf")
+
+TEST(
+    positional_argument_last_override,
+    {
+      parser.add_argument("-f", "--flag", "a flag", true).count(4);
+      parser.add_argument()
+          .name("--file")
+          .position(ArgumentParser::Argument::Position::LAST)
+          .required(true);
+
+      auto err = parser.parse(argc, argv);
+      TASSERT(err, err.what())
+
+      TASSERT(parser.get<std::string>("file") == "asdf",
+              "Positional argument error")
+    },
+    "-f", "1", "2", "myfile", "asdf")
+
 #define TT(name) \
   { #name, name }
 using test = std::function<result()>;
-std::map<std::string, test> tests{TT(no_args),
-                                  TT(short_optional_flag_exists),
-                                  TT(short_optional_flag_does_not_exist),
-                                  TT(short_required_flag_exists),
-                                  TT(short_required_flag_does_not_exist),
-                                  TT(long_optional_flag_exists),
-                                  TT(long_short_optional_flag_pair_exists),
-                                  TT(short_combined_flags),
-                                  TT(vector_flag_empty),
-                                  TT(vector_flag),
-                                  TT(short_and_vector_flag),
-                                  TT(long_required_flag_exists),
-                                  TT(long_required_flag_does_not_exist),
-                                  TT(short_help_flag),
-                                  TT(long_help_flag),
-                                  TT(flag_values)};
+std::unordered_map<std::string, test> tests{
+    TT(no_args),
+    TT(short_optional_flag_exists),
+    TT(short_optional_flag_does_not_exist),
+    TT(short_required_flag_exists),
+    TT(short_required_flag_does_not_exist),
+    TT(long_optional_flag_exists),
+    TT(long_short_optional_flag_pair_exists),
+    TT(short_combined_flags),
+    TT(vector_flag_empty),
+    TT(vector_flag),
+    TT(short_and_vector_flag),
+    TT(long_required_flag_exists),
+    TT(long_required_flag_does_not_exist),
+    TT(short_help_flag),
+    TT(long_help_flag),
+    TT(flag_values),
+    TT(arg_count),
+    TT(arg_count_more),
+    TT(arg_count_less),
+    TT(arg_count_zero),
+    TT(positional_argument_found),
+    TT(positional_argument_not_found),
+    TT(positional_argument_overrun),
+    TT(positional_argument_last),
+    TT(positional_argument_last_override)};
 
 int main(int argc, const char* argv[]) {
   std::vector<result> results;

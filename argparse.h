@@ -204,7 +204,13 @@ class ArgumentParser {
     }
 
     Argument &position(int position) {
-      _position = position;
+      if (position != Position::LAST) {
+        // position + 1 because technically argument zero is the name of the
+        // executable
+        _position = position + 1;
+      } else {
+        _position = position;
+      }
       return *this;
     }
 
@@ -251,6 +257,7 @@ class ArgumentParser {
     std::string _desc{};
     bool _found{false};
     bool _required{false};
+    int _index{-1};
 
     std::vector<std::string> _values{};
   };
@@ -259,6 +266,7 @@ class ArgumentParser {
 
   Argument &add_argument() {
     _arguments.push_back({});
+    _arguments.back()._index = static_cast<int>(_arguments.size()) - 1;
     return _arguments.back();
   }
 
@@ -266,17 +274,50 @@ class ArgumentParser {
                          const std::string &desc, const bool required = false) {
     _arguments.push_back(Argument(name, desc, required));
     _arguments.back()._names.push_back(long_name);
+    _arguments.back()._index = static_cast<int>(_arguments.size()) - 1;
     return _arguments.back();
   }
 
   Argument &add_argument(const std::string &name, const std::string &desc,
                          const bool required = false) {
-    _arguments.push_back({name, desc, required});
+    _arguments.push_back(Argument(name, desc, required));
+    _arguments.back()._index = static_cast<int>(_arguments.size()) - 1;
     return _arguments.back();
   }
 
   void print_help() {
-    std::cout << "Usage: " << _bin << " [options] " << std::endl;
+    std::cout << "Usage: " << _bin;
+    if (_positional_arguments.empty()) {
+      std::cout << " [options]" << std::endl;
+    } else {
+      int current = 0;
+      int diff;
+      for (auto &v : _positional_arguments) {
+        if (v.first != Argument::Position::LAST) {
+          diff = v.first - current;
+          for (diff = current; diff < v.first; diff++) {
+            std::cout << " [" << diff << "] ";
+          }
+          std::cout << "["
+                    << detail::_ltrim_copy(
+                           _arguments[static_cast<size_t>(v.second)]._names[0],
+                           [](int c) -> bool {
+                             return c != static_cast<int>('-');
+                           })
+                    << "]";
+          current = v.first;
+        } else {
+          std::cout << " ... ["
+                    << detail::_ltrim_copy(
+                           _arguments[static_cast<size_t>(v.second)]._names[0],
+                           [](int c) -> bool {
+                             return c != static_cast<int>('-');
+                           })
+                    << "]";
+        }
+      }
+      std::cout << std::endl;
+    }
     std::cout << "Options:" << std::endl;
     for (auto &a : _arguments) {
       std::string name = a._names[0];
@@ -293,28 +334,48 @@ class ArgumentParser {
   }
 
   Result parse(int argc, const char *argv[]) {
+    Result err;
     if (argc > 1) {
       // build name map
-      for (size_t i = 0u; i < _arguments.size(); ++i) {
-        for (auto &n : _arguments[i]._names) {
+      for (auto &a : _arguments) {
+        for (auto &n : a._names) {
           std::string name = detail::_ltrim_copy(
               n, [](int c) -> bool { return c != static_cast<int>('-'); });
           if (_name_map.find(name) != _name_map.end()) {
             return Result("Duplicate of argument name: " + n);
           }
-          _name_map[name] = i;
+          _name_map[name] = a._index;
         }
+        if (a._position >= 0 || a._position == Argument::Position::LAST) {
+          _positional_arguments[a._position] = a._index;
+        }
+      }
+      if (err) {
+        return err;
       }
       _bin = std::filesystem::path(argv[0]).filename().string();
 
       // parse
       std::string current_arg;
       size_t arg_len;
-      Result err;
       for (int argv_index = 1; argv_index < argc; ++argv_index) {
         current_arg = std::string(argv[argv_index]);
         arg_len = current_arg.length();
         if (arg_len == 0) {
+          continue;
+        }
+        if (argv_index == argc - 1 &&
+            _positional_arguments.find(Argument::Position::LAST) !=
+                _positional_arguments.end()) {
+          err = _end_argument();
+          Result b = err;
+          err = _add_value(current_arg, Argument::Position::LAST);
+          if (b) {
+            return b;
+          }
+          if (err) {
+            return err;
+          }
           continue;
         }
         if (arg_len >= 2 &&
@@ -328,24 +389,24 @@ class ArgumentParser {
             }
             // look for --arg (long) args
             if (current_arg[1] == '-') {
-              err = _begin_argument(current_arg.substr(2), true);
+              err = _begin_argument(current_arg.substr(2), true, argv_index);
               if (err) {
                 return err;
               }
             } else {  // short args
-              err = _begin_argument(current_arg.substr(1), false);
+              err = _begin_argument(current_arg.substr(1), false, argv_index);
               if (err) {
                 return err;
               }
             }
           } else {  // argument value
-            err = _add_value(current_arg);
+            err = _add_value(current_arg, argv_index);
             if (err) {
               return err;
             }
           }
         } else {  // argument value
-          err = _add_value(current_arg);
+          err = _add_value(current_arg, argv_index);
           if (err) {
             return err;
           }
@@ -355,9 +416,17 @@ class ArgumentParser {
     if (_help_enabled && exists("help")) {
       return Result();
     }
+    err = _end_argument();
+    if (err) {
+      return err;
+    }
     for (auto &a : _arguments) {
       if (a._required && !a._found) {
         return Result("Required argument not found: " + a._names[0]);
+      }
+      if (a._position >= 0 && argc >= a._position && !a._found) {
+        return Result("Argument " + a._names[0] + " expected in position " +
+                      std::to_string(a._position));
       }
     }
     return Result();
@@ -373,7 +442,7 @@ class ArgumentParser {
         name, [](int c) -> bool { return c != static_cast<int>('-'); });
     auto it = _name_map.find(n);
     if (it != _name_map.end()) {
-      return _arguments[it->second]._found;
+      return _arguments[static_cast<size_t>(it->second)]._found;
     }
     return false;
   }
@@ -382,13 +451,21 @@ class ArgumentParser {
   T get(const std::string &name) {
     auto t = _name_map.find(name);
     if (t != _name_map.end()) {
-      return _arguments[t->second].get<T>();
+      return _arguments[static_cast<size_t>(t->second)].get<T>();
     }
     return T();
   }
 
  private:
-  Result _begin_argument(const std::string &arg, bool longarg) {
+  Result _begin_argument(const std::string &arg, bool longarg, int position) {
+    auto it = _positional_arguments.find(position);
+    if (it != _positional_arguments.end()) {
+      Result err = _end_argument();
+      Argument &a = _arguments[static_cast<size_t>(it->second)];
+      a._values.push_back(arg);
+      a._found = true;
+      return err;
+    }
     if (_current != -1) {
       return Result("Current argument left open");
     }
@@ -400,23 +477,23 @@ class ArgumentParser {
       if (nmf == _name_map.end()) {
         return Result("Unrecognized command line option '" + arg_name + "'");
       }
-      _current = static_cast<int>(nmf->second);
-      _arguments[nmf->second]._found = true;
+      _current = nmf->second;
+      _arguments[static_cast<size_t>(nmf->second)]._found = true;
       if (equal_pos == 0 ||
           (equal_pos < 0 &&
            arg_name.length() < arg.length())) {  // malformed argument
         return Result("Malformed argument: " + arg);
       } else if (equal_pos > 0) {
         std::string arg_value = arg.substr(name_end + 1);
-        _add_value(arg_value);
+        _add_value(arg_value, position);
       }
     } else {
       Result r;
       if (arg_name.length() == 1) {
-        return _begin_argument(arg, true);
+        return _begin_argument(arg, true, position);
       } else {
         for (char &c : arg_name) {
-          r = _begin_argument(std::string(1, c), true);
+          r = _begin_argument(std::string(1, c), true, position);
           if (r) {
             return r;
           }
@@ -430,31 +507,52 @@ class ArgumentParser {
     return Result();
   }
 
-  Result _add_value(const std::string &value) {
+  Result _add_value(const std::string &value, int location) {
     if (_current >= 0) {
+      Result err;
       size_t c = static_cast<size_t>(_current);
-      if (_arguments[c]._count != Argument::Count::ANY &&
-          static_cast<int>(_arguments[c]._values.size()) >
-              _arguments[c]._count) {
-        _end_argument();
+      Argument &a = _arguments[static_cast<size_t>(_current)];
+      if (a._count >= 0 && static_cast<int>(a._values.size()) >= a._count) {
+        err = _end_argument();
+        if (err) {
+          return err;
+        }
         goto unnamed;
       }
-      _arguments[c]._values.push_back(value);
-      if (_arguments[c]._count != Argument::Count::ANY &&
-          static_cast<int>(_arguments[c]._values.size()) >=
-              _arguments[c]._count) {
-        _end_argument();
+      a._values.push_back(value);
+      if (a._count >= 0 && static_cast<int>(a._values.size()) >= a._count) {
+        err = _end_argument();
+        if (err) {
+          return err;
+        }
       }
       return Result();
     } else {
     unnamed:
+      auto it = _positional_arguments.find(location);
+      if (it != _positional_arguments.end()) {
+        Argument &a = _arguments[static_cast<size_t>(it->second)];
+        a._values.push_back(value);
+        a._found = true;
+      }
       // TODO
       return Result();
     }
   }
 
   Result _end_argument() {
-    _current = -1;
+    if (_current >= 0) {
+      Argument &a = _arguments[static_cast<size_t>(_current)];
+      _current = -1;
+      if (static_cast<int>(a._values.size()) < a._count) {
+        return Result("Too few arguments given for " + a._names[0]);
+      }
+      if (a._count >= 0) {
+        if (static_cast<int>(a._values.size()) > a._count) {
+          return Result("Too many arguments given for " + a._names[0]);
+        }
+      }
+    }
     return Result();
   }
 
@@ -463,8 +561,8 @@ class ArgumentParser {
   std::string _desc{};
   std::string _bin{};
   std::vector<Argument> _arguments{};
-  std::map<size_t, size_t> _positional_arguments{};
-  std::map<std::string, size_t> _name_map{};
+  std::map<int, int> _positional_arguments{};
+  std::map<std::string, int> _name_map{};
 };
 
 std::ostream &operator<<(std::ostream &os, const ArgumentParser::Result &r) {
