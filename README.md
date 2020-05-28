@@ -48,7 +48,7 @@ TODO
 using namespace argparse;
 
 int main(int argc, const char* argv[]) {
-  ArgumentParser parser("Argument parser example");
+  ArgumentParser parser("example", "Argument parser example");
   parser.add_argument()
       .names({"-v", "--verbose"})
       .description("verbose level")
