@@ -37,7 +37,4 @@ if(ARGPARSE_TEST_ENABLE)
         NAME tests
         COMMAND $<TARGET_FILE:tests>)
     target_link_libraries(tests PRIVATE argparse)
-    if(UNIX)
-        target_link_libraries(tests PUBLIC stdc++fs)
-    endif(UNIX)
 endif(ARGPARSE_TEST_ENABLE)
