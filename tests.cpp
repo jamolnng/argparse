@@ -1,10 +1,10 @@
-#include "argparse.h"
-
 #include <cmath>
 #include <functional>
 #include <iostream>
 #include <string>
 #include <unordered_map>
+
+#include "argparse.h"
 
 using namespace argparse;
 
@@ -26,7 +26,7 @@ struct result {
   result name() {                                \
     const char* argv[] = {#name, ##__VA_ARGS__}; \
     int argc = sizeof(argv) / sizeof(argv[0]);   \
-    ArgumentParser parser(#name);                \
+    ArgumentParser parser(#name, #name);         \
     code;                                        \
     return {true, 0, "", "", ""};                \
   }

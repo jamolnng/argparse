@@ -31,44 +31,9 @@
 #include <unordered_map>
 #include <vector>
 
-#if defined(__GNUC__) && __GNUC__ < 8
-#include <experimental/filesystem>
-namespace std {
-namespace filesystem = std::experimental::filesystem;
-}
-#elif defined(_MSC_VER) && _MSVC_LANG < 201703L
-#include <filesystem>
-namespace std {
-namespace filesystem = std::experimental::filesystem;
-}  // namespace std
-#else
-#include <filesystem>
-#endif
-
 namespace argparse {
 namespace detail {
-static std::string _delimit(const std::string &name) {
-  return std::string(std::min(name.size(), static_cast<size_t>(2)), '-')
-      .append(name);
-}
-static std::string _strip(const std::string &name) {
-  size_t begin = 0;
-  begin += name.size() > 0 ? name[0] == '-' : 0u;
-  begin += name.size() > 3 ? name[1] == '-' : 0u;
-  return name.substr(begin);
-}
-static std::string _upper(const std::string &in) {
-  std::string out(in);
-  std::transform(out.begin(), out.end(), out.begin(), ::toupper);
-  return out;
-}
-static std::string _escape(const std::string &in) {
-  std::string out(in);
-  if (in.find(' ') != std::string::npos)
-    out = std::string("\"").append(out).append("\"");
-  return out;
-}
-static bool _not_space(int ch) { return !std::isspace(ch); }
+static inline bool _not_space(int ch) { return !std::isspace(ch); }
 static inline void _ltrim(std::string &s, bool (*f)(int) = _not_space) {
   s.erase(s.begin(), std::find_if(s.begin(), s.end(), f));
 }
@@ -262,7 +227,8 @@ class ArgumentParser {
     std::vector<std::string> _values{};
   };
 
-  ArgumentParser(const std::string &desc) : _desc(desc) {}
+  ArgumentParser(const std::string &bin, const std::string &desc)
+      : _bin(bin), _desc(desc) {}
 
   Argument &add_argument() {
     _arguments.push_back({});
@@ -354,7 +320,6 @@ class ArgumentParser {
       if (err) {
         return err;
       }
-      _bin = std::filesystem::path(argv[0]).filename().string();
 
       // parse
       std::string current_arg;
@@ -511,7 +476,6 @@ class ArgumentParser {
   Result _add_value(const std::string &value, int location) {
     if (_current >= 0) {
       Result err;
-      size_t c = static_cast<size_t>(_current);
       Argument &a = _arguments[static_cast<size_t>(_current)];
       if (a._count >= 0 && static_cast<int>(a._values.size()) >= a._count) {
         err = _end_argument();
@@ -559,8 +523,8 @@ class ArgumentParser {
 
   bool _help_enabled{false};
   int _current{-1};
-  std::string _desc{};
   std::string _bin{};
+  std::string _desc{};
   std::vector<Argument> _arguments{};
   std::map<int, int> _positional_arguments{};
   std::map<std::string, int> _name_map{};
