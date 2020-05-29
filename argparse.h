@@ -251,42 +251,50 @@ class ArgumentParser {
     return _arguments.back();
   }
 
-  void print_help() {
-    std::cout << "Usage: " << _bin;
-    if (_positional_arguments.empty()) {
-      std::cout << " [options...]" << std::endl;
-    } else {
-      int current = 0;
-      for (auto &v : _positional_arguments) {
-        if (v.first != Argument::Position::LAST) {
-          for (; current < v.first; ++current) {
-            std::cout << " [" << current << "]";
-          }
-          std::cout << " ["
-                    << detail::_ltrim_copy(
-                           _arguments[static_cast<size_t>(v.second)]._names[0],
-                           [](int c) -> bool {
-                             return c != static_cast<int>('-');
-                           })
-                    << "]";
-        } else {
-          std::cout << " ... ["
-                    << detail::_ltrim_copy(
-                           _arguments[static_cast<size_t>(v.second)]._names[0],
-                           [](int c) -> bool {
-                             return c != static_cast<int>('-');
-                           })
-                    << "]";
-        }
-      }
-      if (_positional_arguments.find(Argument::Position::LAST) ==
-          _positional_arguments.end()) {
-        std::cout << " [options...]";
-      }
-      std::cout << std::endl;
+  void print_help(size_t count = 0, size_t page = 0) {
+    if (page * count > _arguments.size()) {
+      return;
     }
-    std::cout << "Options:" << std::endl;
-    for (auto &a : _arguments) {
+    if (page == 0) {
+      std::cout << "Usage: " << _bin;
+      if (_positional_arguments.empty()) {
+        std::cout << " [options...]" << std::endl;
+      } else {
+        int current = 1;
+        for (auto &v : _positional_arguments) {
+          if (v.first != Argument::Position::LAST) {
+            for (; current < v.first; current++) {
+              std::cout << " [" << current << "]";
+            }
+            std::cout
+                << " ["
+                << detail::_ltrim_copy(
+                       _arguments[static_cast<size_t>(v.second)]._names[0],
+                       [](int c) -> bool { return c != static_cast<int>('-'); })
+                << "]";
+          } else {
+            std::cout
+                << " [options...] ["
+                << detail::_ltrim_copy(
+                       _arguments[static_cast<size_t>(v.second)]._names[0],
+                       [](int c) -> bool { return c != static_cast<int>('-'); })
+                << "]";
+          }
+        }
+        if (_positional_arguments.find(Argument::Position::LAST) ==
+            _positional_arguments.end()) {
+          std::cout << " [options...]";
+        }
+        std::cout << std::endl;
+      }
+      std::cout << "Options:" << std::endl;
+    }
+    if (count == 0) {
+      count = _arguments.size();
+    }
+    for (size_t i = page * count;
+         i < std::min<size_t>(page * count + count, _arguments.size()); i++) {
+      Argument &a = _arguments[i];
       std::string name = a._names[0];
       for (size_t n = 1; n < a._names.size(); ++n) {
         name.append(", " + a._names[n]);
