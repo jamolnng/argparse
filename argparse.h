@@ -338,9 +338,11 @@ class ArgumentParser {
         if (arg_len == 0) {
           continue;
         }
-        if (argv_index == argc - 1 &&
-            _positional_arguments.find(Argument::Position::LAST) !=
-                _positional_arguments.end()) {
+        if (_help_enabled && (current_arg == "-h" || current_arg == "--help")) {
+          _arguments[_name_map["help"]]._found = true;
+        } else if (argv_index == argc - 1 &&
+                   _positional_arguments.find(Argument::Position::LAST) !=
+                       _positional_arguments.end()) {
           err = _end_argument();
           Result b = err;
           err = _add_value(current_arg, Argument::Position::LAST);
@@ -350,11 +352,9 @@ class ArgumentParser {
           if (err) {
             return err;
           }
-          continue;
-        }
-        if (arg_len >= 2 &&
-            !detail::_is_number(
-                current_arg)) {  // ignores the case if the arg is just a -
+        } else if (arg_len >= 2 &&
+                   !detail::_is_number(current_arg)) {  // ignores the case if
+                                                        // the arg is just a -
           // look for -a (short) or --arg (long) args
           if (current_arg[0] == '-') {
             err = _end_argument();
@@ -393,6 +393,25 @@ class ArgumentParser {
     err = _end_argument();
     if (err) {
       return err;
+    }
+    for (auto &p : _positional_arguments) {
+      Argument &a = _arguments[p.second];
+      if (a._values.size() > 0 && a._values[0][0] == '-') {
+        std::string name = detail::_ltrim_copy(a._values[0], [](int c) -> bool {
+          return c != static_cast<int>('-');
+        });
+        if (_name_map.find(name) != _name_map.end()) {
+          if (a._position == Argument::Position::LAST) {
+            return Result(
+                "Poisitional argument expected at the end, but argument " +
+                a._values[0] + " found instead");
+          } else {
+            return Result("Poisitional argument expected in position " +
+                          std::to_string(a._position) + ", but argument " +
+                          a._values[0] + " found instead");
+          }
+        }
+      }
     }
     for (auto &a : _arguments) {
       if (a._required && !a._found) {
@@ -436,7 +455,7 @@ class ArgumentParser {
     if (it != _positional_arguments.end()) {
       Result err = _end_argument();
       Argument &a = _arguments[static_cast<size_t>(it->second)];
-      a._values.push_back(arg);
+      a._values.push_back((longarg ? "--" : "-") + arg);
       a._found = true;
       return err;
     }

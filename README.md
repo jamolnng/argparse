@@ -40,10 +40,10 @@ TODO
 TODO
 ## Example
 ```cpp
-#include "argparse.h"
-
 #include <iostream>
 #include <iterator>
+
+#include "argparse.h"
 
 using namespace argparse;
 
@@ -53,6 +53,9 @@ int main(int argc, const char* argv[]) {
       .names({"-v", "--verbose"})
       .description("verbose level")
       .required(true);
+  parser.add_argument("-t", "--test", "test", true)
+      .position(ArgumentParser::Argument::Position::LAST);
+  parser.add_argument("-d", "--dtest", "dtest", true).position(0);
   parser.enable_help();
   auto err = parser.parse(argc, argv);
   if (err) {
@@ -76,6 +79,14 @@ int main(int argc, const char* argv[]) {
       default:
         std::cout << "some verbosity" << std::endl;
     }
+  }
+
+  if (parser.exists("test")) {
+    std::cout << parser.get<std::string>("test") << std::endl;
+  }
+
+  if (parser.exists("dtest")) {
+    std::cout << parser.get<std::string>("dtest") << std::endl;
   }
 }
 ```
