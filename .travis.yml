@@ -17,16 +17,6 @@ script:
     # - sudo ln -s /usr/bin/gcc-6 /usr/local/bin/gcc
     # - sudo ln -s /usr/bin/g++-6 /usr/local/bin/g++
     - cmake --version
-    - CC=/usr/bin/gcc
-    - CXX=/usr/bin/g++
-    - $CC --version && $CXX --version
-    - mkdir build && cd build
-    - cmake ../
-    - make
-    - make test
-    - cd .. && rm -rf build/
-    - CC=/usr/bin/clang
-    - CXX=/usr/bin/clang++
     - $CC --version && $CXX --version
     - mkdir build && cd build
     - cmake ../
