@@ -1,20 +1,33 @@
 dist: bionic
 sudo: require
 language: cpp
-compiler: gcc
+compiler:
+  - gcc
+  - clang
 addons:
   apt:
     sources:
       - ubuntu-toolchain-r-test
-    packages:
-      - gcc-6
-      - g++-6
+    # packages:
+    #   - gcc-6
+    #   - g++-6
       - cmake-data
       - cmake
 script:
-    - sudo ln -s /usr/bin/gcc-6 /usr/local/bin/gcc
-    - sudo ln -s /usr/bin/g++-6 /usr/local/bin/g++
-    - gcc -v && g++ -v && cmake --version
+    # - sudo ln -s /usr/bin/gcc-6 /usr/local/bin/gcc
+    # - sudo ln -s /usr/bin/g++-6 /usr/local/bin/g++
+    - cmake --version
+    - CC=/usr/bin/gcc
+    - CXX=/usr/bin/g++
+    - $CC --version && $CXX --version
+    - mkdir build && cd build
+    - cmake ../
+    - make
+    - make test
+    - cd .. && rm -rf build/
+    - CC=/usr/bin/clang
+    - CXX=/usr/bin/clang++
+    - $CC --version && $CXX --version
     - mkdir build && cd build
     - cmake ../
     - make
