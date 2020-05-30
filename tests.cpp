@@ -1,3 +1,9 @@
+/**
+ * License: Apache 2.0 with LLVM Exception or GPL v3
+ *
+ * Author: Jesse Laning
+ */
+
 #include <cmath>
 #include <functional>
 #include <iostream>
