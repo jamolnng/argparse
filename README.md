@@ -72,16 +72,16 @@ int main(int argc, const char* argv[]) {
     switch (parser.get<unsigned int>("v")) {
       case 2:
         std::cout << "an even more verbose string" << std::endl;
-        // fall through
 #ifdef __clang__
         [[clang::fallthrough]];
 #endif
+        // fall through
       case 1:
         std::cout << "a verbose string" << std::endl;
-        // fall through
 #ifdef __clang__
         [[clang::fallthrough]];
 #endif
+        // fall through
       default:
         std::cout << "some verbosity" << std::endl;
     }
