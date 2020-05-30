@@ -142,4 +142,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 Please make sure to update tests as appropriate.
 
 ## License
-[Apache-2.0-with-LLVM-Exception](https://github.com/jamolnng/argparse/blob/master/LICENSE.Apache-2.0-with-LLVM-Exception) or [GPL-3.0](https://github.com/jamolnng/argparse/blob/master/LICENSE.GPL-3.0)
+[Apache-2.0-with-LLVM-Exception](./LICENSE.Apache-2.0-with-LLVM-Exception) or [GPL-3.0](./LICENSE.GPL-3.0)
