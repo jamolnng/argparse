@@ -339,7 +339,7 @@ class ArgumentParser {
           continue;
         }
         if (_help_enabled && (current_arg == "-h" || current_arg == "--help")) {
-          _arguments[_name_map["help"]]._found = true;
+          _arguments[static_cast<size_t>(_name_map["help"])]._found = true;
         } else if (argv_index == argc - 1 &&
                    _positional_arguments.find(Argument::Position::LAST) !=
                        _positional_arguments.end()) {
@@ -395,7 +395,7 @@ class ArgumentParser {
       return err;
     }
     for (auto &p : _positional_arguments) {
-      Argument &a = _arguments[p.second];
+      Argument &a = _arguments[static_cast<size_t>(p.second)];
       if (a._values.size() > 0 && a._values[0][0] == '-') {
         std::string name = detail::_ltrim_copy(a._values[0], [](int c) -> bool {
           return c != static_cast<int>('-');

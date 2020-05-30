@@ -8,15 +8,35 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(ARGPARSE_TEST_ENABLE "Build unit tests" ON)
 option(ARGPARSE_BUILD_EXAMPLE "Build example" ON)
-if(UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -pedantic-errors -Wall -Wextra \
-    -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 \
-    -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept \
-    -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow \
-    -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 \
-    -Wswitch-default -Wundef -Werror -Wno-unused -Winline -Wconversion -Wfloat-equal\
-    -Weffc++")
-endif(UNIX)
+if(WIN32)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /Wall /WX -Wno-c++98-compat -Wno-c++98-compat-pedantic \
+            -Wno-gnu-zero-variadic-macro-arguments"
+        )
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /Wall /WX")
+    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set(
+            CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -pedantic-errors -Wall -Wextra \
+            -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 \
+            -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept \
+            -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow \
+            -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 \
+            -Wswitch-default -Wundef -Werror -Wno-unused -Winline -Wconversion -Wfloat-equal\
+            -Weffc++"
+        )
+    endif()
+elseif(UNIX)
+    set(
+        CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -pedantic-errors -Wall -Wextra \
+        -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 \
+        -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept \
+        -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow \
+        -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 \
+        -Wswitch-default -Wundef -Werror -Wno-unused -Winline -Wconversion -Wfloat-equal\
+        -Weffc++"
+    )
+endif()
 
 enable_testing()
 

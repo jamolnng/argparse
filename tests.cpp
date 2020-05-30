@@ -375,34 +375,35 @@ TEST(
 #define TT(name) \
   { #name, name }
 using test = std::function<result()>;
-std::unordered_map<std::string, test> tests{
-    TT(no_args),
-    TT(short_optional_flag_exists),
-    TT(short_optional_flag_does_not_exist),
-    TT(short_required_flag_exists),
-    TT(short_required_flag_does_not_exist),
-    TT(long_optional_flag_exists),
-    TT(long_short_optional_flag_pair_exists),
-    TT(short_combined_flags),
-    TT(vector_flag_empty),
-    TT(vector_flag),
-    TT(short_and_vector_flag),
-    TT(long_required_flag_exists),
-    TT(long_required_flag_does_not_exist),
-    TT(short_help_flag),
-    TT(long_help_flag),
-    TT(flag_values),
-    TT(arg_count),
-    TT(arg_count_more),
-    TT(arg_count_less),
-    TT(arg_count_zero),
-    TT(positional_argument_found),
-    TT(positional_argument_not_found),
-    TT(positional_argument_overrun),
-    TT(positional_argument_last),
-    TT(positional_argument_last_override)};
 
 int main(int argc, const char* argv[]) {
+  std::unordered_map<std::string, test> tests{
+      TT(no_args),
+      TT(short_optional_flag_exists),
+      TT(short_optional_flag_does_not_exist),
+      TT(short_required_flag_exists),
+      TT(short_required_flag_does_not_exist),
+      TT(long_optional_flag_exists),
+      TT(long_short_optional_flag_pair_exists),
+      TT(short_combined_flags),
+      TT(vector_flag_empty),
+      TT(vector_flag),
+      TT(short_and_vector_flag),
+      TT(long_required_flag_exists),
+      TT(long_required_flag_does_not_exist),
+      TT(short_help_flag),
+      TT(long_help_flag),
+      TT(flag_values),
+      TT(arg_count),
+      TT(arg_count_more),
+      TT(arg_count_less),
+      TT(arg_count_zero),
+      TT(positional_argument_found),
+      TT(positional_argument_not_found),
+      TT(positional_argument_overrun),
+      TT(positional_argument_last),
+      TT(positional_argument_last_override)};
+
   std::vector<result> results;
   size_t passed = 0;
   if (argc > 1) {

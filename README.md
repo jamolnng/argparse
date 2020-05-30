@@ -73,9 +73,11 @@ int main(int argc, const char* argv[]) {
       case 2:
         std::cout << "an even more verbose string" << std::endl;
         // fall through
+        [[clang::fallthrough]];
       case 1:
         std::cout << "a verbose string" << std::endl;
         // fall through
+        [[clang::fallthrough]];
       default:
         std::cout << "some verbosity" << std::endl;
     }
