@@ -262,24 +262,25 @@ class ArgumentParser {
                        _arguments[static_cast<size_t>(v.second)]._names[0],
                        [](int c) -> bool { return c != static_cast<int>('-'); })
                 << "]";
-          } else {
-            std::cout
-                << " [options...] ["
-                << detail::_ltrim_copy(
-                       _arguments[static_cast<size_t>(v.second)]._names[0],
-                       [](int c) -> bool { return c != static_cast<int>('-'); })
-                << "]";
           }
         }
-        if (_positional_arguments.find(Argument::Position::LAST) ==
-            _positional_arguments.end()) {
+        auto it = _positional_arguments.find(Argument::Position::LAST);
+        if (it == _positional_arguments.end()) {
           std::cout << " [options...]";
+        } else {
+          std::cout
+              << " [options...] ["
+              << detail::_ltrim_copy(
+                     _arguments[static_cast<size_t>(it->second)]._names[0],
+                     [](int c) -> bool { return c != static_cast<int>('-'); })
+              << "]";
         }
         std::cout << std::endl;
       }
       std::cout << "Options:" << std::endl;
     }
     if (count == 0) {
+      page = 0;
       count = _arguments.size();
     }
     for (size_t i = page * count;
