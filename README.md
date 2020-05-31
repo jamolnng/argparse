@@ -98,23 +98,31 @@ int main(int argc, const char* argv[]) {
 ```
 Example output:
 ```
-> program -v 2
+> program "something" -v 2 "something else"
 an even more verbose string
 a verbose string
 some verbosity
+something else
+something
 
-> program -v=1
+> program "something" -v=1 "something else"
 a verbose string
 some verbosity
+something else
+something
 
-> program --verbose
+> program "something" --verbose "something else"
 some verbosity
+something else
+something
 
 > program -h
-Usage: program [options] 
+Usage: example [options...] [t] [d]
 Options:
     -v, --verbose          verbose level           (Required)
-    -h, --help             Shows this page        
+    -t, --test             test                    (Required)
+    -d, --dtest            dtest                   (Required)
+    -h, --help             Shows this page      
 
 > program
 Required argument not found: -v
