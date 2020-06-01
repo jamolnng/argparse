@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <regex>
 
 namespace argparse {
 namespace detail {
@@ -157,7 +158,10 @@ class ArgumentParser {
       _required = req;
       return *this;
     }
-
+    Argument &regex(const std::string& regex){
+        _regex = std::regex(regex);
+        return *this;
+    }
     Argument &position(int position) {
       if (position != Position::LAST) {
         // position + 1 because technically argument zero is the name of the
@@ -176,6 +180,13 @@ class ArgumentParser {
 
     bool found() const { return _found; }
 
+    bool matchPattern(){
+      bool valid = true;
+      for(const std::string &i: _values){
+        valid &= std::regex_match(i,_regex);
+      }
+      return valid;
+    }
     template <typename T>
     typename std::enable_if<detail::is_vector<T>::value, T>::type get() {
       T t = T();
@@ -198,12 +209,12 @@ class ArgumentParser {
 
    private:
     Argument(const std::string &name, const std::string &desc,
-             bool required = false)
-        : _desc(desc), _required(required) {
+             bool required = false, const std::string &regex = ".*")
+        : _desc(desc), _required(required), _regex(regex) {
       _names.push_back(name);
     }
 
-    Argument() {}
+    Argument() : _regex(".*") {}
 
     friend class ArgumentParser;
     int _position{Position::DONT_CARE};
@@ -213,7 +224,7 @@ class ArgumentParser {
     bool _found{false};
     bool _required{false};
     int _index{-1};
-
+    std::regex _regex;
     std::vector<std::string> _values{};
   };
 
@@ -405,6 +416,9 @@ class ArgumentParser {
       }
     }
     for (auto &a : _arguments) {
+      if(!a.matchPattern()){
+        return Result("Argument " + a._names[0] + " do not match pattern");
+      }
       if (a._required && !a._found) {
         return Result("Required argument not found: " + a._names[0]);
       }

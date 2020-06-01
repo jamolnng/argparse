@@ -377,7 +377,14 @@ TEST(
               "Positional argument error")
     },
     "-f", "1", "2", "myfile", "asdf")
-
+TEST(regex,
+        {
+            parser.add_argument().name("-f").regex(".*");
+            parser.add_argument().name("-l").regex("[0-9]");
+            auto err = parser.parse(argc,argv);
+            TASSERT(err,err.what());
+            TASSERT(err.what()== "Argument -l do not match pattern", err.what());
+        },"-f", "randomFile","-l", "a")
 #define TT(name) \
   { #name, name }
 using test = std::function<result()>;
@@ -408,7 +415,9 @@ int main(int argc, const char* argv[]) {
       TT(positional_argument_not_found),
       TT(positional_argument_overrun),
       TT(positional_argument_last),
-      TT(positional_argument_last_override)};
+      TT(positional_argument_last_override),
+      TT(regex)
+  };
 
   std::vector<result> results;
   size_t passed = 0;
